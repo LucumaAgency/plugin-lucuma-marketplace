@@ -963,17 +963,29 @@
  ],
  "makes": [
   "ASV",
+  "Atlas Copco",
   "Bandit",
   "Barko",
+  "Bell",
   "Bobcat",
+  "Bomag",
   "Case",
-  "Caterpillar",
+  {
+   "name": "Caterpillar",
+   "aliases": [
+    "CAT"
+   ]
+  },
+  "Champion",
   "Develon",
+  "Ditch Witch",
   "Doosan",
   "Dressta",
   "Dynapac",
+  "Euclid",
   "Fiori",
   "Freightliner",
+  "Furukawa",
   "Gehl",
   "Genie",
   "Gradall",
@@ -984,6 +996,13 @@
   "International",
   "JCB",
   "JLG",
+  {
+   "name": "John Deere",
+   "aliases": [
+    "Deere"
+   ]
+  },
+  "Kawasaki",
   "Kenworth",
   "Kobelco",
   "Komatsu",
@@ -999,22 +1018,18 @@
   "New Holland",
   "Peterbilt",
   "Rayco",
+  "Rosco",
   "Sany",
   "SkyTrak",
   "Tadano",
   "Takeuchi",
   "Terex",
+  "Thwaites",
   "Vermeer",
   "Volvo",
   "Wacker Neuson",
   "Western Star",
   "XCMG",
-  "Yanmar",
-  {
-   "name": "John Deere",
-   "aliases": [
-    "Deere"
-   ]
-  }
+  "Yanmar"
  ]
 }
