@@ -144,6 +144,15 @@ class LM_Panel_Api {
 		return self::save( $p->ID, (array) $req->get_json_params() );
 	}
 
+	/** "Wheel Loaders" → "Wheel Loader" for auto titles ("Compactors & Rollers" stays as it is). */
+	public static function singular( string $name ): string {
+		if ( str_contains( $name, '&' ) ) return $name;
+		if ( preg_match( '/ies$/', $name ) ) return substr( $name, 0, -3 ) . 'y';
+		if ( preg_match( '/(ch|sh|x)es$/', $name ) ) return substr( $name, 0, -2 );
+		if ( preg_match( '/[^s]s$/', $name ) ) return substr( $name, 0, -1 );
+		return $name;
+	}
+
 	/** Same as the panel save, for the importer: new listings belong to $author (admins import for a dealer). */
 	public static function save_for( int $id, array $b, int $author ) {
 		if ( $id && ! current_user_can( 'edit_post', $id ) ) return new WP_Error( 'not_found', 'Not found.', [ 'status' => 404 ] );
@@ -161,7 +170,7 @@ class LM_Panel_Api {
 
 		$year  = isset( $b['year'] ) && $b['year'] !== '' ? (int) $b['year'] : null;
 		$title = trim( sanitize_text_field( (string) ( $b['title'] ?? '' ) ) );
-		if ( $title === '' ) $title = trim( ( $year ?: '' ) . ' ' . wp_specialchars_decode( $make->name ) . ' ' . $model_name . ' ' . wp_specialchars_decode( $cat->name ) );
+		if ( $title === '' ) $title = trim( ( $year ?: '' ) . ' ' . wp_specialchars_decode( $make->name ) . ' ' . $model_name . ' ' . self::singular( wp_specialchars_decode( $cat->name ) ) );
 
 		$data = [
 			'post_type'    => LM_Model::PT,
