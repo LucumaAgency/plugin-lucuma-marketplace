@@ -1,172 +1,1020 @@
 {
-  "categories": [
+ "categories": [
+  {
+   "name": "Construction",
+   "slug": "construction",
+   "specs": [
     {
-      "name": "Construction", "slug": "construction",
-      "specs": [
-        { "key": "operating_weight", "label": "Operating weight", "type": "number", "unit": "lb" },
-        { "key": "engine_hp", "label": "Engine power", "type": "number", "unit": "hp" },
-        { "key": "engine_make", "label": "Engine make", "type": "text" },
-        { "key": "cab", "label": "Cab", "type": "select", "options": ["Enclosed", "Open (ROPS)"] },
-        { "key": "air_conditioning", "label": "Air conditioning", "type": "boolean" }
-      ],
-      "children": [
-        { "name": "Excavators", "slug": "excavators", "specs": [
-          { "key": "bucket_capacity", "label": "Bucket capacity", "type": "number", "unit": "yd³" },
-          { "key": "max_dig_depth", "label": "Max dig depth", "type": "number", "unit": "ft" },
-          { "key": "track_type", "label": "Track type", "type": "select", "options": ["Steel", "Rubber"] },
-          { "key": "aux_hydraulics", "label": "Auxiliary hydraulics", "type": "boolean" },
-          { "key": "thumb", "label": "Thumb", "type": "boolean" }
-        ] },
-        { "name": "Mini Excavators", "slug": "mini-excavators", "specs": [
-          { "key": "max_dig_depth", "label": "Max dig depth", "type": "number", "unit": "ft" },
-          { "key": "track_type", "label": "Track type", "type": "select", "options": ["Rubber", "Steel"] },
-          { "key": "blade", "label": "Blade", "type": "boolean" },
-          { "key": "aux_hydraulics", "label": "Auxiliary hydraulics", "type": "boolean" }
-        ] },
-        { "name": "Wheel Loaders", "slug": "wheel-loaders", "specs": [
-          { "key": "bucket_capacity", "label": "Bucket capacity", "type": "number", "unit": "yd³" },
-          { "key": "breakout_force", "label": "Breakout force", "type": "number", "unit": "lbf" },
-          { "key": "tire_size", "label": "Tire size", "type": "text" },
-          { "key": "quick_coupler", "label": "Quick coupler", "type": "boolean" }
-        ] },
-        { "name": "Dozers", "slug": "dozers", "specs": [
-          { "key": "blade_type", "label": "Blade type", "type": "select", "options": ["Straight (S)", "Universal (U)", "Semi-U (SU)", "PAT / 6-way"] },
-          { "key": "blade_width", "label": "Blade width", "type": "number", "unit": "ft" },
-          { "key": "ripper", "label": "Ripper", "type": "boolean" },
-          { "key": "undercarriage_percent", "label": "Undercarriage remaining", "type": "number", "unit": "%" }
-        ] },
-        { "name": "Skid Steers", "slug": "skid-steers", "specs": [
-          { "key": "rated_operating_capacity", "label": "Rated operating capacity", "type": "number", "unit": "lb" },
-          { "key": "lift_path", "label": "Lift path", "type": "select", "options": ["Vertical", "Radial"] },
-          { "key": "high_flow", "label": "High-flow hydraulics", "type": "boolean" },
-          { "key": "controls", "label": "Controls", "type": "select", "options": ["Joystick (pilot)", "Hand/foot", "Electro-hydraulic"] }
-        ] },
-        { "name": "Compact Track Loaders", "slug": "compact-track-loaders", "specs": [
-          { "key": "rated_operating_capacity", "label": "Rated operating capacity", "type": "number", "unit": "lb" },
-          { "key": "lift_path", "label": "Lift path", "type": "select", "options": ["Vertical", "Radial"] },
-          { "key": "high_flow", "label": "High-flow hydraulics", "type": "boolean" },
-          { "key": "track_width", "label": "Track width", "type": "number", "unit": "in" }
-        ] },
-        { "name": "Backhoe Loaders", "slug": "backhoe-loaders", "specs": [
-          { "key": "max_dig_depth", "label": "Max dig depth", "type": "number", "unit": "ft" },
-          { "key": "drive", "label": "Drive", "type": "select", "options": ["2WD", "4WD"] },
-          { "key": "extendahoe", "label": "Extendable dipper", "type": "boolean" }
-        ] },
-        { "name": "Motor Graders", "slug": "motor-graders", "specs": [
-          { "key": "moldboard_width", "label": "Moldboard width", "type": "number", "unit": "ft" },
-          { "key": "drive", "label": "Drive", "type": "select", "options": ["6x4", "6x6 (AWD)"] },
-          { "key": "ripper", "label": "Ripper / scarifier", "type": "boolean" }
-        ] },
-        { "name": "Telehandlers", "slug": "telehandlers", "specs": [
-          { "key": "max_lift_capacity", "label": "Max lift capacity", "type": "number", "unit": "lb" },
-          { "key": "max_lift_height", "label": "Max lift height", "type": "number", "unit": "ft" }
-        ] },
-        { "name": "Articulated Dump Trucks", "slug": "articulated-dump-trucks", "specs": [
-          { "key": "payload", "label": "Payload", "type": "number", "unit": "ton" },
-          { "key": "tailgate", "label": "Tailgate", "type": "boolean" }
-        ] },
-        { "name": "Compactors & Rollers", "slug": "compactors-rollers", "specs": [
-          { "key": "drum_width", "label": "Drum width", "type": "number", "unit": "in" },
-          { "key": "drum_type", "label": "Drum type", "type": "select", "options": ["Smooth", "Padfoot", "Pneumatic"] }
-        ] }
-      ]
+     "key": "operating_weight",
+     "label": "Operating weight",
+     "type": "number",
+     "unit": "lb"
     },
     {
-      "name": "Trucks", "slug": "trucks",
-      "specs": [
-        { "key": "engine_make", "label": "Engine make", "type": "text" },
-        { "key": "engine_hp", "label": "Engine power", "type": "number", "unit": "hp" },
-        { "key": "transmission", "label": "Transmission", "type": "select", "options": ["Manual", "Automated manual", "Automatic"] },
-        { "key": "gvwr", "label": "GVWR", "type": "number", "unit": "lb" },
-        { "key": "axle_config", "label": "Axle configuration", "type": "select", "options": ["4x2", "6x4", "6x6", "8x4", "Tri-axle", "Quad-axle"] }
-      ],
-      "children": [
-        { "name": "Semi Tractors", "slug": "semi-tractors", "specs": [
-          { "key": "sleeper", "label": "Sleeper", "type": "boolean" },
-          { "key": "fifth_wheel", "label": "Sliding fifth wheel", "type": "boolean" }
-        ] },
-        { "name": "Dump Trucks", "slug": "dump-trucks", "specs": [
-          { "key": "body_length", "label": "Body length", "type": "number", "unit": "ft" },
-          { "key": "body_material", "label": "Body material", "type": "select", "options": ["Steel", "Aluminum"] }
-        ] },
-        { "name": "Water Trucks", "slug": "water-trucks", "specs": [
-          { "key": "tank_capacity", "label": "Tank capacity", "type": "number", "unit": "gal" }
-        ] }
-      ]
+     "key": "engine_hp",
+     "label": "Engine power",
+     "type": "number",
+     "unit": "hp"
     },
     {
-      "name": "Trailers", "slug": "trailers",
-      "specs": [
-        { "key": "length", "label": "Length", "type": "number", "unit": "ft" },
-        { "key": "axles", "label": "Axles", "type": "number" },
-        { "key": "gvwr", "label": "GVWR", "type": "number", "unit": "lb" }
-      ],
-      "children": [
-        { "name": "Lowboy Trailers", "slug": "lowboy-trailers", "specs": [
-          { "key": "gooseneck", "label": "Gooseneck", "type": "select", "options": ["Removable (RGN)", "Fixed", "Folding"] }
-        ] },
-        { "name": "Flatbed Trailers", "slug": "flatbed-trailers", "specs": [] },
-        { "name": "Dump Trailers", "slug": "dump-trailers", "specs": [] }
-      ]
+     "key": "engine_make",
+     "label": "Engine make",
+     "type": "text"
     },
     {
-      "name": "Aerial Lifts", "slug": "aerial-lifts",
-      "specs": [
-        { "key": "platform_height", "label": "Platform height", "type": "number", "unit": "ft" },
-        { "key": "platform_capacity", "label": "Platform capacity", "type": "number", "unit": "lb" },
-        { "key": "power", "label": "Power", "type": "select", "options": ["Electric", "Diesel", "Dual fuel", "Hybrid"] }
-      ],
-      "children": [
-        { "name": "Boom Lifts", "slug": "boom-lifts", "specs": [
-          { "key": "boom_type", "label": "Boom type", "type": "select", "options": ["Articulating", "Telescopic"] }
-        ] },
-        { "name": "Scissor Lifts", "slug": "scissor-lifts", "specs": [] }
-      ]
+     "key": "cab",
+     "label": "Cab",
+     "type": "select",
+     "options": [
+      "Enclosed",
+      "Open (ROPS)"
+     ]
     },
     {
-      "name": "Cranes", "slug": "cranes",
-      "specs": [
-        { "key": "max_lift_capacity_tons", "label": "Max lift capacity", "type": "number", "unit": "ton" },
-        { "key": "boom_length", "label": "Boom length", "type": "number", "unit": "ft" }
-      ],
-      "children": [
-        { "name": "Rough Terrain Cranes", "slug": "rough-terrain-cranes", "specs": [] },
-        { "name": "Crawler Cranes", "slug": "crawler-cranes", "specs": [] },
-        { "name": "Truck-Mounted Cranes", "slug": "truck-mounted-cranes", "specs": [] }
-      ]
+     "key": "air_conditioning",
+     "label": "Air conditioning",
+     "type": "boolean"
+    }
+   ],
+   "children": [
+    {
+     "name": "Excavators",
+     "slug": "excavators",
+     "specs": [
+      {
+       "key": "bucket_capacity",
+       "label": "Bucket capacity",
+       "type": "number",
+       "unit": "yd³"
+      },
+      {
+       "key": "max_dig_depth",
+       "label": "Max dig depth",
+       "type": "number",
+       "unit": "ft"
+      },
+      {
+       "key": "track_type",
+       "label": "Track type",
+       "type": "select",
+       "options": [
+        "Steel",
+        "Rubber"
+       ]
+      },
+      {
+       "key": "aux_hydraulics",
+       "label": "Auxiliary hydraulics",
+       "type": "boolean"
+      },
+      {
+       "key": "thumb",
+       "label": "Thumb",
+       "type": "boolean"
+      }
+     ],
+     "aliases": [
+      "Crawler Excavators"
+     ]
     },
     {
-      "name": "Agriculture", "slug": "agriculture",
-      "specs": [
-        { "key": "engine_hp", "label": "Engine power", "type": "number", "unit": "hp" }
-      ],
-      "children": [
-        { "name": "Tractors", "slug": "tractors", "specs": [
-          { "key": "pto_hp", "label": "PTO power", "type": "number", "unit": "hp" },
-          { "key": "drive", "label": "Drive", "type": "select", "options": ["2WD", "MFWD", "4WD", "Track"] },
-          { "key": "loader", "label": "Front loader", "type": "boolean" }
-        ] },
-        { "name": "Combines", "slug": "combines", "specs": [
-          { "key": "separator_hours", "label": "Separator hours", "type": "number", "unit": "h" }
-        ] }
-      ]
+     "name": "Mini Excavators",
+     "slug": "mini-excavators",
+     "specs": [
+      {
+       "key": "max_dig_depth",
+       "label": "Max dig depth",
+       "type": "number",
+       "unit": "ft"
+      },
+      {
+       "key": "track_type",
+       "label": "Track type",
+       "type": "select",
+       "options": [
+        "Rubber",
+        "Steel"
+       ]
+      },
+      {
+       "key": "blade",
+       "label": "Blade",
+       "type": "boolean"
+      },
+      {
+       "key": "aux_hydraulics",
+       "label": "Auxiliary hydraulics",
+       "type": "boolean"
+      }
+     ]
     },
     {
-      "name": "Generators & Power", "slug": "generators-power",
-      "specs": [
-        { "key": "power_kw", "label": "Power", "type": "number", "unit": "kW" },
-        { "key": "fuel", "label": "Fuel", "type": "select", "options": ["Diesel", "Natural gas", "Propane", "Gasoline"] }
-      ]
+     "name": "Wheel Loaders",
+     "slug": "wheel-loaders",
+     "specs": [
+      {
+       "key": "bucket_capacity",
+       "label": "Bucket capacity",
+       "type": "number",
+       "unit": "yd³"
+      },
+      {
+       "key": "breakout_force",
+       "label": "Breakout force",
+       "type": "number",
+       "unit": "lbf"
+      },
+      {
+       "key": "tire_size",
+       "label": "Tire size",
+       "type": "text"
+      },
+      {
+       "key": "quick_coupler",
+       "label": "Quick coupler",
+       "type": "boolean"
+      }
+     ],
+     "aliases": [
+      "Wheel Loader"
+     ]
     },
-    { "name": "Attachments", "slug": "attachments", "specs": [
-      { "key": "fits", "label": "Fits", "type": "text" }
-    ] }
-  ],
-  "makes": [
-    "ASV", "Bobcat", "Case", "Caterpillar", "Develon", "Doosan", "Freightliner", "Gehl", "Genie", "Gradall",
-    "Grove", "HD Hyundai", "Hitachi", "International", "JCB", "JLG", "John Deere", "Kenworth", "Kobelco",
-    "Komatsu", "Kubota", "Liebherr", "Link-Belt", "Mack", "Manitou", "Manitowoc", "Mustang", "New Holland",
-    "Peterbilt", "Sany", "SkyTrak", "Tadano", "Takeuchi", "Terex", "Vermeer", "Volvo", "Wacker Neuson",
-    "Western Star", "XCMG", "Yanmar"
-  ]
+    {
+     "name": "Dozers",
+     "slug": "dozers",
+     "specs": [
+      {
+       "key": "blade_type",
+       "label": "Blade type",
+       "type": "select",
+       "options": [
+        "Straight (S)",
+        "Universal (U)",
+        "Semi-U (SU)",
+        "PAT / 6-way"
+       ]
+      },
+      {
+       "key": "blade_width",
+       "label": "Blade width",
+       "type": "number",
+       "unit": "ft"
+      },
+      {
+       "key": "ripper",
+       "label": "Ripper",
+       "type": "boolean"
+      },
+      {
+       "key": "undercarriage_percent",
+       "label": "Undercarriage remaining",
+       "type": "number",
+       "unit": "%"
+      }
+     ],
+     "aliases": [
+      "Crawler Dozers"
+     ]
+    },
+    {
+     "name": "Skid Steers",
+     "slug": "skid-steers",
+     "specs": [
+      {
+       "key": "rated_operating_capacity",
+       "label": "Rated operating capacity",
+       "type": "number",
+       "unit": "lb"
+      },
+      {
+       "key": "lift_path",
+       "label": "Lift path",
+       "type": "select",
+       "options": [
+        "Vertical",
+        "Radial"
+       ]
+      },
+      {
+       "key": "high_flow",
+       "label": "High-flow hydraulics",
+       "type": "boolean"
+      },
+      {
+       "key": "controls",
+       "label": "Controls",
+       "type": "select",
+       "options": [
+        "Joystick (pilot)",
+        "Hand/foot",
+        "Electro-hydraulic"
+       ]
+      }
+     ],
+     "aliases": [
+      "Wheel Skid Steers"
+     ]
+    },
+    {
+     "name": "Compact Track Loaders",
+     "slug": "compact-track-loaders",
+     "specs": [
+      {
+       "key": "rated_operating_capacity",
+       "label": "Rated operating capacity",
+       "type": "number",
+       "unit": "lb"
+      },
+      {
+       "key": "lift_path",
+       "label": "Lift path",
+       "type": "select",
+       "options": [
+        "Vertical",
+        "Radial"
+       ]
+      },
+      {
+       "key": "high_flow",
+       "label": "High-flow hydraulics",
+       "type": "boolean"
+      },
+      {
+       "key": "track_width",
+       "label": "Track width",
+       "type": "number",
+       "unit": "in"
+      }
+     ],
+     "aliases": [
+      "Track Skid Steers"
+     ]
+    },
+    {
+     "name": "Backhoe Loaders",
+     "slug": "backhoe-loaders",
+     "specs": [
+      {
+       "key": "max_dig_depth",
+       "label": "Max dig depth",
+       "type": "number",
+       "unit": "ft"
+      },
+      {
+       "key": "drive",
+       "label": "Drive",
+       "type": "select",
+       "options": [
+        "2WD",
+        "4WD"
+       ]
+      },
+      {
+       "key": "extendahoe",
+       "label": "Extendable dipper",
+       "type": "boolean"
+      }
+     ],
+     "aliases": [
+      "Loader Backhoes"
+     ]
+    },
+    {
+     "name": "Motor Graders",
+     "slug": "motor-graders",
+     "specs": [
+      {
+       "key": "moldboard_width",
+       "label": "Moldboard width",
+       "type": "number",
+       "unit": "ft"
+      },
+      {
+       "key": "drive",
+       "label": "Drive",
+       "type": "select",
+       "options": [
+        "6x4",
+        "6x6 (AWD)"
+       ]
+      },
+      {
+       "key": "ripper",
+       "label": "Ripper / scarifier",
+       "type": "boolean"
+      }
+     ]
+    },
+    {
+     "name": "Telehandlers",
+     "slug": "telehandlers",
+     "specs": [
+      {
+       "key": "max_lift_capacity",
+       "label": "Max lift capacity",
+       "type": "number",
+       "unit": "lb"
+      },
+      {
+       "key": "max_lift_height",
+       "label": "Max lift height",
+       "type": "number",
+       "unit": "ft"
+      }
+     ],
+     "aliases": [
+      "Telescopic Forklifts"
+     ]
+    },
+    {
+     "name": "Articulated Dump Trucks",
+     "slug": "articulated-dump-trucks",
+     "specs": [
+      {
+       "key": "payload",
+       "label": "Payload",
+       "type": "number",
+       "unit": "ton"
+      },
+      {
+       "key": "tailgate",
+       "label": "Tailgate",
+       "type": "boolean"
+      }
+     ]
+    },
+    {
+     "name": "Compactors & Rollers",
+     "slug": "compactors-rollers",
+     "specs": [
+      {
+       "key": "drum_width",
+       "label": "Drum width",
+       "type": "number",
+       "unit": "in"
+      },
+      {
+       "key": "drum_type",
+       "label": "Drum type",
+       "type": "select",
+       "options": [
+        "Smooth",
+        "Padfoot",
+        "Pneumatic"
+       ]
+      }
+     ],
+     "aliases": [
+      "Padfoot Compactors",
+      "Smooth Drum Compactors",
+      "Pneumatic Compactors",
+      "Vibratory Rollers"
+     ]
+    },
+    {
+     "name": "Mini Skid Steers",
+     "slug": "mini-skid-steers",
+     "specs": [
+      {
+       "key": "rated_operating_capacity",
+       "label": "Rated operating capacity",
+       "type": "number",
+       "unit": "lb"
+      },
+      {
+       "key": "undercarriage",
+       "label": "Undercarriage",
+       "type": "select",
+       "options": [
+        "Tracks",
+        "Wheels"
+       ]
+      }
+     ]
+    },
+    {
+     "name": "Crawler Loaders",
+     "slug": "crawler-loaders",
+     "specs": [
+      {
+       "key": "bucket_capacity",
+       "label": "Bucket capacity",
+       "type": "number",
+       "unit": "yd³"
+      },
+      {
+       "key": "bucket_type",
+       "label": "Bucket type",
+       "type": "select",
+       "options": [
+        "General purpose",
+        "4-in-1 (multipurpose)"
+       ]
+      }
+     ]
+    },
+    {
+     "name": "Site Dumpers",
+     "slug": "site-dumpers",
+     "aliases": [
+      "Dumpers"
+     ],
+     "specs": [
+      {
+       "key": "payload",
+       "label": "Payload",
+       "type": "number",
+       "unit": "lb"
+      },
+      {
+       "key": "tipping",
+       "label": "Tipping",
+       "type": "select",
+       "options": [
+        "Front",
+        "Swivel",
+        "High tip"
+       ]
+      }
+     ]
+    },
+    {
+     "name": "Off-Highway Trucks",
+     "slug": "off-highway-trucks",
+     "aliases": [
+      "Rigid Dump Trucks"
+     ],
+     "specs": [
+      {
+       "key": "payload",
+       "label": "Payload",
+       "type": "number",
+       "unit": "ton"
+      }
+     ]
+    },
+    {
+     "name": "Rough Terrain Forklifts",
+     "slug": "rough-terrain-forklifts",
+     "specs": [
+      {
+       "key": "max_lift_capacity",
+       "label": "Max lift capacity",
+       "type": "number",
+       "unit": "lb"
+      },
+      {
+       "key": "mast_height",
+       "label": "Max mast height",
+       "type": "number",
+       "unit": "ft"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Trucks",
+   "slug": "trucks",
+   "specs": [
+    {
+     "key": "engine_make",
+     "label": "Engine make",
+     "type": "text"
+    },
+    {
+     "key": "engine_hp",
+     "label": "Engine power",
+     "type": "number",
+     "unit": "hp"
+    },
+    {
+     "key": "transmission",
+     "label": "Transmission",
+     "type": "select",
+     "options": [
+      "Manual",
+      "Automated manual",
+      "Automatic"
+     ]
+    },
+    {
+     "key": "gvwr",
+     "label": "GVWR",
+     "type": "number",
+     "unit": "lb"
+    },
+    {
+     "key": "axle_config",
+     "label": "Axle configuration",
+     "type": "select",
+     "options": [
+      "4x2",
+      "6x4",
+      "6x6",
+      "8x4",
+      "Tri-axle",
+      "Quad-axle"
+     ]
+    }
+   ],
+   "children": [
+    {
+     "name": "Semi Tractors",
+     "slug": "semi-tractors",
+     "specs": [
+      {
+       "key": "sleeper",
+       "label": "Sleeper",
+       "type": "boolean"
+      },
+      {
+       "key": "fifth_wheel",
+       "label": "Sliding fifth wheel",
+       "type": "boolean"
+      }
+     ],
+     "aliases": [
+      "Conventional - Day Cab Trucks",
+      "Conventional - Sleeper Trucks"
+     ]
+    },
+    {
+     "name": "Dump Trucks",
+     "slug": "dump-trucks",
+     "specs": [
+      {
+       "key": "body_length",
+       "label": "Body length",
+       "type": "number",
+       "unit": "ft"
+      },
+      {
+       "key": "body_material",
+       "label": "Body material",
+       "type": "select",
+       "options": [
+        "Steel",
+        "Aluminum"
+       ]
+      }
+     ]
+    },
+    {
+     "name": "Water Trucks",
+     "slug": "water-trucks",
+     "specs": [
+      {
+       "key": "tank_capacity",
+       "label": "Tank capacity",
+       "type": "number",
+       "unit": "gal"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Trailers",
+   "slug": "trailers",
+   "specs": [
+    {
+     "key": "length",
+     "label": "Length",
+     "type": "number",
+     "unit": "ft"
+    },
+    {
+     "key": "axles",
+     "label": "Axles",
+     "type": "number"
+    },
+    {
+     "key": "gvwr",
+     "label": "GVWR",
+     "type": "number",
+     "unit": "lb"
+    }
+   ],
+   "children": [
+    {
+     "name": "Lowboy Trailers",
+     "slug": "lowboy-trailers",
+     "specs": [
+      {
+       "key": "gooseneck",
+       "label": "Gooseneck",
+       "type": "select",
+       "options": [
+        "Removable (RGN)",
+        "Fixed",
+        "Folding"
+       ]
+      }
+     ]
+    },
+    {
+     "name": "Flatbed Trailers",
+     "slug": "flatbed-trailers",
+     "specs": []
+    },
+    {
+     "name": "Dump Trailers",
+     "slug": "dump-trailers",
+     "specs": []
+    }
+   ]
+  },
+  {
+   "name": "Aerial Lifts",
+   "slug": "aerial-lifts",
+   "specs": [
+    {
+     "key": "platform_height",
+     "label": "Platform height",
+     "type": "number",
+     "unit": "ft"
+    },
+    {
+     "key": "platform_capacity",
+     "label": "Platform capacity",
+     "type": "number",
+     "unit": "lb"
+    },
+    {
+     "key": "power",
+     "label": "Power",
+     "type": "select",
+     "options": [
+      "Electric",
+      "Diesel",
+      "Dual fuel",
+      "Hybrid"
+     ]
+    }
+   ],
+   "children": [
+    {
+     "name": "Boom Lifts",
+     "slug": "boom-lifts",
+     "specs": [
+      {
+       "key": "boom_type",
+       "label": "Boom type",
+       "type": "select",
+       "options": [
+        "Articulating",
+        "Telescopic"
+       ]
+      }
+     ],
+     "aliases": [
+      "Telescopic Boom Lifts",
+      "Articulating Boom Lifts"
+     ]
+    },
+    {
+     "name": "Scissor Lifts",
+     "slug": "scissor-lifts",
+     "specs": []
+    }
+   ]
+  },
+  {
+   "name": "Cranes",
+   "slug": "cranes",
+   "specs": [
+    {
+     "key": "max_lift_capacity_tons",
+     "label": "Max lift capacity",
+     "type": "number",
+     "unit": "ton"
+    },
+    {
+     "key": "boom_length",
+     "label": "Boom length",
+     "type": "number",
+     "unit": "ft"
+    }
+   ],
+   "children": [
+    {
+     "name": "Rough Terrain Cranes",
+     "slug": "rough-terrain-cranes",
+     "specs": []
+    },
+    {
+     "name": "Crawler Cranes",
+     "slug": "crawler-cranes",
+     "specs": []
+    },
+    {
+     "name": "Truck-Mounted Cranes",
+     "slug": "truck-mounted-cranes",
+     "specs": []
+    }
+   ]
+  },
+  {
+   "name": "Agriculture",
+   "slug": "agriculture",
+   "specs": [
+    {
+     "key": "engine_hp",
+     "label": "Engine power",
+     "type": "number",
+     "unit": "hp"
+    }
+   ],
+   "children": [
+    {
+     "name": "Tractors",
+     "slug": "tractors",
+     "specs": [
+      {
+       "key": "pto_hp",
+       "label": "PTO power",
+       "type": "number",
+       "unit": "hp"
+      },
+      {
+       "key": "drive",
+       "label": "Drive",
+       "type": "select",
+       "options": [
+        "2WD",
+        "MFWD",
+        "4WD",
+        "Track"
+       ]
+      },
+      {
+       "key": "loader",
+       "label": "Front loader",
+       "type": "boolean"
+      }
+     ],
+     "aliases": [
+      "Less than 40 HP Tractors",
+      "40 HP to 99 HP Tractors",
+      "100 HP to 174 HP Tractors",
+      "175 HP or Greater Tractors"
+     ]
+    },
+    {
+     "name": "Combines",
+     "slug": "combines",
+     "specs": [
+      {
+       "key": "separator_hours",
+       "label": "Separator hours",
+       "type": "number",
+       "unit": "h"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Generators & Power",
+   "slug": "generators-power",
+   "specs": [
+    {
+     "key": "power_kw",
+     "label": "Power",
+     "type": "number",
+     "unit": "kW"
+    },
+    {
+     "key": "fuel",
+     "label": "Fuel",
+     "type": "select",
+     "options": [
+      "Diesel",
+      "Natural gas",
+      "Propane",
+      "Gasoline"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Forestry",
+   "slug": "forestry",
+   "specs": [
+    {
+     "key": "engine_hp",
+     "label": "Engine power",
+     "type": "number",
+     "unit": "hp"
+    },
+    {
+     "key": "engine_make",
+     "label": "Engine make",
+     "type": "text"
+    },
+    {
+     "key": "cab",
+     "label": "Cab",
+     "type": "select",
+     "options": [
+      "Enclosed",
+      "Open (ROPS)"
+     ]
+    }
+   ],
+   "children": [
+    {
+     "name": "Mulchers",
+     "slug": "mulchers",
+     "aliases": [
+      "Track Mulchers",
+      "Wheel Mulchers",
+      "Mulching Heads"
+     ],
+     "specs": [
+      {
+       "key": "carrier",
+       "label": "Carrier",
+       "type": "select",
+       "options": [
+        "Track",
+        "Wheel"
+       ]
+      },
+      {
+       "key": "head_width",
+       "label": "Head width",
+       "type": "number",
+       "unit": "in"
+      },
+      {
+       "key": "operating_weight",
+       "label": "Operating weight",
+       "type": "number",
+       "unit": "lb"
+      }
+     ]
+    },
+    {
+     "name": "Stump Grinders",
+     "slug": "stump-grinders",
+     "aliases": [
+      "Track Stump Grinders",
+      "Towable Stump Grinders"
+     ],
+     "specs": [
+      {
+       "key": "cutting_depth",
+       "label": "Cutting depth below grade",
+       "type": "number",
+       "unit": "in"
+      }
+     ]
+    },
+    {
+     "name": "Skidders",
+     "slug": "skidders",
+     "aliases": [
+      "Cable Skidders",
+      "Grapple Skidders"
+     ],
+     "specs": [
+      {
+       "key": "skidder_type",
+       "label": "Type",
+       "type": "select",
+       "options": [
+        "Grapple",
+        "Cable",
+        "Dual arch"
+       ]
+      }
+     ]
+    },
+    {
+     "name": "Wood Chippers",
+     "slug": "wood-chippers",
+     "aliases": [
+      "Towable Wood Chippers",
+      "Track Wood Chippers"
+     ],
+     "specs": [
+      {
+       "key": "max_chip_diameter",
+       "label": "Max chip diameter",
+       "type": "number",
+       "unit": "in"
+      },
+      {
+       "key": "feed",
+       "label": "Feed",
+       "type": "select",
+       "options": [
+        "Drum",
+        "Disc"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Utility Vehicles",
+   "slug": "utility-vehicles",
+   "specs": [
+    {
+     "key": "seats",
+     "label": "Seats",
+     "type": "number"
+    },
+    {
+     "key": "drive",
+     "label": "Drive",
+     "type": "select",
+     "options": [
+      "2WD",
+      "4WD"
+     ]
+    },
+    {
+     "key": "fuel",
+     "label": "Fuel",
+     "type": "select",
+     "options": [
+      "Gas",
+      "Diesel",
+      "Electric"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Attachments",
+   "slug": "attachments",
+   "specs": [
+    {
+     "key": "fits",
+     "label": "Fits",
+     "type": "text"
+    }
+   ]
+  }
+ ],
+ "makes": [
+  "ASV",
+  "Bandit",
+  "Barko",
+  "Bobcat",
+  "Case",
+  "Caterpillar",
+  "Develon",
+  "Doosan",
+  "Dressta",
+  "Dynapac",
+  "Fiori",
+  "Freightliner",
+  "Gehl",
+  "Genie",
+  "Gradall",
+  "Grove",
+  "HD Hyundai",
+  "Hitachi",
+  "IHIMER",
+  "International",
+  "JCB",
+  "JLG",
+  "Kenworth",
+  "Kobelco",
+  "Komatsu",
+  "Kubota",
+  "Liebherr",
+  "Link-Belt",
+  "Load Lifter",
+  "Mack",
+  "Mahindra",
+  "Manitou",
+  "Manitowoc",
+  "Mustang",
+  "New Holland",
+  "Peterbilt",
+  "Rayco",
+  "Sany",
+  "SkyTrak",
+  "Tadano",
+  "Takeuchi",
+  "Terex",
+  "Vermeer",
+  "Volvo",
+  "Wacker Neuson",
+  "Western Star",
+  "XCMG",
+  "Yanmar",
+  {
+   "name": "John Deere",
+   "aliases": [
+    "Deere"
+   ]
+  }
+ ]
 }

@@ -5,6 +5,7 @@
  *   GET  /catalog   public: category tree with its specs, and makes
  *   POST /seed      admin: load data/catalogo.json (idempotent: by slug, specs are overwritten)
  *   POST /models    dealers and admins: find or create a model under an existing make
+ *   GET  /resolve   ?category=…&make=… → catalog term by name, slug or alias (for importers)
  */
 defined( 'ABSPATH' ) || exit;
 
@@ -22,6 +23,9 @@ class LM_Rest {
 		] );
 		register_rest_route( self::NS, '/seed', [
 			'methods' => 'POST', 'permission_callback' => fn() => current_user_can( 'manage_options' ), 'callback' => [ __CLASS__, 'seed' ],
+		] );
+		register_rest_route( self::NS, '/resolve', [
+			'methods' => 'GET', 'permission_callback' => '__return_true', 'callback' => [ __CLASS__, 'resolve' ],
 		] );
 		register_rest_route( self::NS, '/models', [
 			'methods' => 'POST', 'permission_callback' => fn() => current_user_can( 'edit_lm_equipments' ), 'callback' => [ __CLASS__, 'model' ],
@@ -48,9 +52,10 @@ class LM_Rest {
 		foreach ( get_terms( [ 'taxonomy' => LM_Model::CATEGORY, 'parent' => $parent, 'hide_empty' => false, 'orderby' => 'name' ] ) as $t ) {
 			$out[] = [
 				'id'       => $t->term_id,
-				'name'     => $t->name,
+				'name'     => wp_specialchars_decode( $t->name ),
 				'slug'     => $t->slug,
 				'count'    => $t->count,
+				'aliases'  => self::aliases( $t->term_id ),
 				'specs'    => LM_Specs::of_term( $t->term_id ),
 				'children' => self::tree( $t->term_id ),
 			];
@@ -60,17 +65,47 @@ class LM_Rest {
 
 	public static function catalog() {
 		$makes = array_map(
-			fn( $t ) => [ 'id' => $t->term_id, 'name' => $t->name, 'slug' => $t->slug, 'count' => $t->count ],
+			fn( $t ) => [ 'id' => $t->term_id, 'name' => wp_specialchars_decode( $t->name ), 'slug' => $t->slug, 'count' => $t->count, 'aliases' => self::aliases( $t->term_id ) ],
 			get_terms( [ 'taxonomy' => LM_Model::MAKE, 'hide_empty' => false, 'orderby' => 'name' ] )
 		);
 		return [ 'categories' => self::tree(), 'makes' => $makes ];
+	}
+
+	private static function aliases( int $term_id ): array {
+		$a = get_term_meta( $term_id, 'lm_aliases', true );
+		return is_array( $a ) ? $a : [];
+	}
+
+	/** A term of the catalog by id, slug, name or alias (case and spacing ignored). */
+	public static function find_term( string $tax, string $text ) {
+		$text = trim( $text );
+		if ( $text === '' ) return null;
+		if ( ctype_digit( $text ) ) { $t = get_term( (int) $text, $tax ); return $t && ! is_wp_error( $t ) ? $t : null; }
+		$norm = fn( $s ) => strtolower( preg_replace( '/[^a-z0-9]+/i', '', remove_accents( wp_specialchars_decode( (string) $s ) ) ) );
+		$q = $norm( $text );
+		foreach ( get_terms( [ 'taxonomy' => $tax, 'hide_empty' => false ] ) as $t ) {
+			if ( $norm( $t->name ) === $q || $norm( $t->slug ) === $q ) return $t;
+			foreach ( self::aliases( $t->term_id ) as $al ) if ( $norm( $al ) === $q ) return $t;
+		}
+		return null;
+	}
+
+	public static function resolve( WP_REST_Request $req ) {
+		$out = [];
+		foreach ( [ 'category' => LM_Model::CATEGORY, 'make' => LM_Model::MAKE ] as $p => $tax ) {
+			$v = (string) $req->get_param( $p );
+			if ( $v === '' ) continue;
+			$t = self::find_term( $tax, $v );
+			$out[ $p ] = $t ? [ 'id' => $t->term_id, 'name' => wp_specialchars_decode( $t->name ), 'slug' => $t->slug ] : null;
+		}
+		return $out;
 	}
 
 	/** Find a term by slug under a parent, or create it. Returns [term_id, created?]. */
 	private static function upsert( string $tax, string $name, string $slug, int $parent = 0 ): array {
 		$found = get_terms( [ 'taxonomy' => $tax, 'slug' => $slug, 'hide_empty' => false, 'parent' => $parent ] );
 		if ( ! is_wp_error( $found ) && $found ) {
-			if ( $found[0]->name !== $name ) wp_update_term( $found[0]->term_id, $tax, [ 'name' => $name ] );
+			if ( wp_specialchars_decode( $found[0]->name ) !== $name ) wp_update_term( $found[0]->term_id, $tax, [ 'name' => $name ] );
 			return [ (int) $found[0]->term_id, false ];
 		}
 		$r = wp_insert_term( $name, $tax, [ 'slug' => $slug, 'parent' => $parent ] );
@@ -86,6 +121,7 @@ class LM_Rest {
 			if ( empty( $c['name'] ) ) continue;
 			[ $id, $new ] = self::upsert( LM_Model::CATEGORY, $c['name'], $c['slug'] ?? sanitize_title( $c['name'] ), $parent );
 			$n[ $new ? 'categories_created' : 'categories_kept' ]++;
+			update_term_meta( $id, 'lm_aliases', array_values( array_filter( array_map( 'strval', $c['aliases'] ?? [] ) ) ) );
 			$specs = array_values( array_filter( $c['specs'] ?? [], [ 'LM_Specs', 'valid_def' ] ) );
 			update_term_meta( $id, 'lm_specs', $specs );
 			$n['spec_fields'] += count( $specs );
@@ -101,7 +137,10 @@ class LM_Rest {
 		try {
 			self::seed_categories( $data['categories'] ?? [], 0, $n );
 			foreach ( $data['makes'] ?? [] as $m ) {
-				[ , $new ] = self::upsert( LM_Model::MAKE, $m, sanitize_title( $m ) );
+				$name = is_array( $m ) ? (string) ( $m['name'] ?? '' ) : (string) $m;
+				if ( $name === '' ) continue;
+				[ $mid, $new ] = self::upsert( LM_Model::MAKE, $name, sanitize_title( $name ) );
+				update_term_meta( $mid, 'lm_aliases', is_array( $m ) ? array_values( array_map( 'strval', $m['aliases'] ?? [] ) ) : [] );
 				$n[ $new ? 'makes_created' : 'makes_kept' ]++;
 			}
 		} catch ( RuntimeException $e ) {
@@ -115,7 +154,7 @@ class LM_Rest {
 		$make  = $req->get_param( 'make' );
 		$model = trim( sanitize_text_field( (string) $req->get_param( 'model' ) ) );
 		if ( ! $make || $model === '' ) return new WP_Error( 'missing', 'make and model are required.', [ 'status' => 400 ] );
-		$term = is_numeric( $make ) ? get_term( (int) $make, LM_Model::MAKE ) : ( get_term_by( 'slug', sanitize_title( $make ), LM_Model::MAKE ) ?: get_term_by( 'name', $make, LM_Model::MAKE ) );
+		$term = self::find_term( LM_Model::MAKE, (string) $make );
 		if ( ! $term || is_wp_error( $term ) ) return new WP_Error( 'unknown_make', "Make «{$make}» is not in the catalog.", [ 'status' => 404 ] );
 		$slug = sanitize_title( $term->slug . '-' . $model );
 		try {

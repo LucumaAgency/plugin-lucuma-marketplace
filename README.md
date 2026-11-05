@@ -21,7 +21,8 @@ refresca solo el rol Dealer y las reglas de URL una vez por versión (`lm_versio
 ## API `lucuma-mkt/v1`
 - `GET /catalog`: categorías con sus specs y marcas (público).
 - `POST /seed`: carga `data/catalogo.json` (admin; idempotente por slug, pisa las specs).
-- `POST /models` `{make, model}`: busca o crea el modelo bajo una marca existente (dealers y admin).
+- `POST /models` `{make, model}`: busca o crea el modelo bajo una marca existente (dealers y admin; la marca acepta alias, p. ej. "Deere").
+- `GET /resolve?category=…&make=…`: traduce un nombre (de Sandhills u otro origen) a la categoría o marca del catálogo, por nombre, slug o alias (`lm_aliases`).
 
 ## Siguiente (outline, orden de trabajo)
 Panel del dealer en el frente · importador CSV/Sandhills · tabla propia de búsqueda + buscador ·
