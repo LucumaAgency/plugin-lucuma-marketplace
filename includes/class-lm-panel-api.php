@@ -175,7 +175,9 @@ class LM_Panel_Api {
 			$data['post_author'] = ( $author && current_user_can( 'edit_others_lm_equipments' ) ) ? $author : get_current_user_id();
 			if ( ! current_user_can( 'publish_lm_equipments' ) ) $data['post_status'] = 'draft';
 		}
-		$id = wp_insert_post( wp_slash( $data ), true );
+		// Update with wp_update_post: it keeps the author and dates (wp_insert_post would make the
+		// current user the author when an admin or the importer edits a dealer's listing).
+		$id = $id ? wp_update_post( wp_slash( $data ), true ) : wp_insert_post( wp_slash( $data ), true );
 		if ( is_wp_error( $id ) ) return $id;
 
 		// Model under its make (created if missing), then the terms.

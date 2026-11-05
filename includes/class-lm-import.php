@@ -43,10 +43,12 @@ class LM_Import {
 		rewind( $h );
 		$csv = stream_get_contents( $h );
 		fclose( $h );
-		$r = new WP_REST_Response( $csv );
-		$r->header( 'Content-Type', 'text/csv; charset=utf-8' );
-		$r->header( 'Content-Disposition', 'attachment; filename="inventory-template.csv"' );
-		return $r;
+		// Raw CSV (a WP_REST_Response would be JSON-encoded as a string).
+		nocache_headers();
+		header( 'Content-Type: text/csv; charset=utf-8' );
+		header( 'Content-Disposition: attachment; filename="inventory-template.csv"' );
+		echo $csv; // phpcs:ignore WordPress.Security.EscapeOutput -- CSV body
+		exit;
 	}
 
 	/* ------------------------------------------------------------------ parse + preview */
