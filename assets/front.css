@@ -1,9 +1,15 @@
-/* Lucuma Marketplace · public pieces (shortcodes placed in Bricks). Lucuma visual system: blue #174FCA, Montserrat, light base. */
+/* Lucuma Marketplace · public pieces (shortcodes placed in Bricks).
+ * Brand-neutral: colors, radius and font come from CSS variables defined in Bricks
+ * (Global Variables / Theme Style). Without them the pieces fall back to black and grays.
+ *   --lm-accent  --lm-accent-dark  --lm-accent-tint  --lm-text  --lm-body  --lm-muted
+ *   --lm-line  --lm-soft  --lm-radius  --lm-radius-btn  --lm-font */
 :root {
-  --lmf-text: #10151C; --lmf-body: #3E4653; --lmf-muted: #5B6472; --lmf-line: #E3E8F0; --lmf-soft: #F7F9FC;
-  --lmf-accent: #174FCA; --lmf-accent-dk: #0D2F7B; --lmf-tint: #EAF0FC; --lmf-r: 10px; --lmf-rb: 6px;
+  --lmf-text: var(--lm-text, #111827); --lmf-body: var(--lm-body, #374151); --lmf-muted: var(--lm-muted, #6B7280);
+  --lmf-line: var(--lm-line, #E5E7EB); --lmf-soft: var(--lm-soft, #F9FAFB);
+  --lmf-accent: var(--lm-accent, #111827); --lmf-accent-dk: var(--lm-accent-dark, #000000); --lmf-tint: var(--lm-accent-tint, #F3F4F6);
+  --lmf-r: var(--lm-radius, 10px); --lmf-rb: var(--lm-radius-btn, 6px);
 }
-.lmf-search, .lmf-cats, .lmf-grid, .lmf-chips, .lmf-filters, .lmf-gallery, .lmf-facts, .lmf-specs, .lmf-dealer, .lmf-crumbs, .lmf-empty { font-family: inherit; color: var(--lmf-text); }
+.lmf-search, .lmf-cats, .lmf-grid, .lmf-chips, .lmf-filters, .lmf-gallery, .lmf-facts, .lmf-specs, .lmf-dealer, .lmf-crumbs, .lmf-empty, .lmf-h1, .lmf-bigprice { font-family: var(--lm-font, inherit); color: var(--lmf-text); }
 .lmf-search *, .lmf-grid *, .lmf-dealer * { box-sizing: border-box; }
 
 /* search */

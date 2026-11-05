@@ -1,9 +1,10 @@
 /* Lucuma Marketplace · dealer panel. Scoped to .lmp so Bricks styles are not touched. */
 .lmp, .lmp-login {
-  --lmp-text: #10151C; --lmp-muted: #5B6472; --lmp-line: #E3E8F0; --lmp-bg: #F7F9FC; --lmp-card: #fff;
-  --lmp-accent: #174FCA; --lmp-accent-dk: #0D2F7B; --lmp-ok: #0f7b4f; --lmp-bad: #b42318; --lmp-r: 8px;
+  /* Brand-neutral: same --lm-* variables as front.css (defined in Bricks). */
+  --lmp-text: var(--lm-text, #111827); --lmp-muted: var(--lm-muted, #6B7280); --lmp-line: var(--lm-line, #E5E7EB); --lmp-bg: var(--lm-soft, #F9FAFB); --lmp-card: #fff;
+  --lmp-accent: var(--lm-accent, #111827); --lmp-accent-dk: var(--lm-accent-dark, #000000); --lmp-ok: #0f7b4f; --lmp-bad: #b42318; --lmp-r: 8px;
   max-width: 1100px; margin: 32px auto; padding: 0 16px; color: var(--lmp-text);
-  font: 400 15px/1.55 "Montserrat", system-ui, -apple-system, "Segoe UI", sans-serif;
+  font: 400 15px/1.55 var(--lm-font, system-ui, -apple-system, "Segoe UI", sans-serif);
 }
 .lmp *, .lmp *::before, .lmp *::after { box-sizing: border-box; }
 .lmp h2 { margin: 0; font-size: 26px; line-height: 1.2; }
@@ -30,7 +31,7 @@
   width: 100%; padding: 9px 11px; border: 1px solid var(--lmp-line); border-radius: var(--lmp-r); background: #fff; font: inherit; color: inherit;
 }
 .lmp-search { max-width: 420px; }
-.lmp input:focus, .lmp select:focus, .lmp textarea:focus { outline: 2px solid rgba(23, 79, 202, .3); border-color: var(--lmp-accent); }
+.lmp input:focus, .lmp select:focus, .lmp textarea:focus { outline: 2px solid var(--lm-accent-tint, #E5E7EB); border-color: var(--lmp-accent); }
 
 .lmp-table { width: 100%; border-collapse: collapse; background: var(--lmp-card); border: 1px solid var(--lmp-line); border-radius: var(--lmp-r); overflow: hidden; }
 .lmp-table th { text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--lmp-muted); padding: 10px 12px; border-bottom: 1px solid var(--lmp-line); background: var(--lmp-bg); }
@@ -54,7 +55,7 @@
 .lmp-check { display: flex; align-items: center; gap: 8px; font-size: 14px; }
 .lmp-align { align-self: end; padding-bottom: 10px; }
 .lmp-drop { border: 2px dashed var(--lmp-line); border-radius: var(--lmp-r); padding: 14px; }
-.lmp-drop.over { border-color: var(--lmp-accent); background: #EAF0FC; }
+.lmp-drop.over { border-color: var(--lmp-accent); background: var(--lm-accent-tint, #F3F4F6); }
 .lmp-drop p { margin: 0 0 10px; font-size: 14px; }
 .lmp-photos { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; }
 .lmp-photos figure { position: relative; margin: 0; aspect-ratio: 4 / 3; border-radius: 6px; overflow: hidden; background: var(--lmp-bg); cursor: grab; display: flex; align-items: center; justify-content: center; }

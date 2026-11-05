@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Lucuma Marketplace
  * Description: Heavy equipment marketplace core: equipment listings, categories, makes and models, specs per category, dealers.
- * Version: 0.5.3
+ * Version: 0.6.0
  * Author: Lucuma Agency
  * Requires at least: 6.4
  * Requires PHP: 8.1
@@ -11,7 +11,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'LM_VERSION', '0.5.3' );
+define( 'LM_VERSION', '0.6.0' );
 define( 'LM_DIR', __DIR__ );
 
 require_once LM_DIR . '/includes/class-lm-model.php';
