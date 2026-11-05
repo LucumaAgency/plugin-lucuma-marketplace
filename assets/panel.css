@@ -1,9 +1,9 @@
 /* Lucuma Marketplace · dealer panel. Scoped to .lmp so Bricks styles are not touched. */
 .lmp, .lmp-login {
-  --lmp-text: #1f2328; --lmp-muted: #6b7280; --lmp-line: #e3e5e8; --lmp-bg: #f6f7f8; --lmp-card: #fff;
-  --lmp-accent: #d97706; --lmp-accent-dk: #b45309; --lmp-ok: #0f7b4f; --lmp-bad: #b42318; --lmp-r: 8px;
+  --lmp-text: #10151C; --lmp-muted: #5B6472; --lmp-line: #E3E8F0; --lmp-bg: #F7F9FC; --lmp-card: #fff;
+  --lmp-accent: #174FCA; --lmp-accent-dk: #0D2F7B; --lmp-ok: #0f7b4f; --lmp-bad: #b42318; --lmp-r: 8px;
   max-width: 1100px; margin: 32px auto; padding: 0 16px; color: var(--lmp-text);
-  font: 400 15px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font: 400 15px/1.55 "Montserrat", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 .lmp *, .lmp *::before, .lmp *::after { box-sizing: border-box; }
 .lmp h2 { margin: 0; font-size: 26px; line-height: 1.2; }
@@ -30,7 +30,7 @@
   width: 100%; padding: 9px 11px; border: 1px solid var(--lmp-line); border-radius: var(--lmp-r); background: #fff; font: inherit; color: inherit;
 }
 .lmp-search { max-width: 420px; }
-.lmp input:focus, .lmp select:focus, .lmp textarea:focus { outline: 2px solid rgba(217, 119, 6, .35); border-color: var(--lmp-accent); }
+.lmp input:focus, .lmp select:focus, .lmp textarea:focus { outline: 2px solid rgba(23, 79, 202, .3); border-color: var(--lmp-accent); }
 
 .lmp-table { width: 100%; border-collapse: collapse; background: var(--lmp-card); border: 1px solid var(--lmp-line); border-radius: var(--lmp-r); overflow: hidden; }
 .lmp-table th { text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--lmp-muted); padding: 10px 12px; border-bottom: 1px solid var(--lmp-line); background: var(--lmp-bg); }
@@ -42,7 +42,7 @@
 .lmp-name:hover { text-decoration: underline; }
 .lmp-status { width: auto; min-width: 120px; }
 .lmp-row-actions { white-space: nowrap; font-size: 14px; }
-.lmp-badge { display: inline-block; margin-left: 4px; padding: 1px 7px; border-radius: 99px; background: #fff4e5; color: var(--lmp-accent-dk); font-size: 11px; font-weight: 700; }
+.lmp-badge { display: inline-block; margin-left: 4px; padding: 1px 7px; border-radius: 99px; background: #FDF4DF; color: #8A5A00; font-size: 11px; font-weight: 700; }
 .lmp-empty { padding: 40px 20px; text-align: center; background: var(--lmp-card); border: 1px dashed var(--lmp-line); border-radius: var(--lmp-r); }
 
 .lmp-form section { background: var(--lmp-card); border: 1px solid var(--lmp-line); border-radius: var(--lmp-r); padding: 18px; margin-bottom: 14px; }
@@ -54,7 +54,7 @@
 .lmp-check { display: flex; align-items: center; gap: 8px; font-size: 14px; }
 .lmp-align { align-self: end; padding-bottom: 10px; }
 .lmp-drop { border: 2px dashed var(--lmp-line); border-radius: var(--lmp-r); padding: 14px; }
-.lmp-drop.over { border-color: var(--lmp-accent); background: #fff8ec; }
+.lmp-drop.over { border-color: var(--lmp-accent); background: #EAF0FC; }
 .lmp-drop p { margin: 0 0 10px; font-size: 14px; }
 .lmp-photos { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; }
 .lmp-photos figure { position: relative; margin: 0; aspect-ratio: 4 / 3; border-radius: 6px; overflow: hidden; background: var(--lmp-bg); cursor: grab; display: flex; align-items: center; justify-content: center; }

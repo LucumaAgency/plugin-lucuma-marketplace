@@ -75,7 +75,9 @@ class LM_Panel {
 			return '<div class="lmp-login"><h2>Dealer dashboard</h2><p>This account is not a dealer account. Contact us to list your equipment.</p></div>';
 		}
 		$base = plugins_url( 'assets/', LM_DIR . '/lucuma-marketplace.php' );
-		wp_enqueue_style( 'lm-panel', $base . 'panel.css', [], LM_VERSION );
+		// Same type as Lucuma CRM and Proyectos.
+		wp_enqueue_style( 'lm-montserrat', 'https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap', [], null );
+		wp_enqueue_style( 'lm-panel', $base . 'panel.css', [ 'lm-montserrat' ], LM_VERSION );
 		wp_enqueue_script( 'lm-panel', $base . 'panel.js', [], LM_VERSION, true );
 		wp_localize_script( 'lm-panel', 'LMP', [
 			'api'     => esc_url_raw( rest_url( 'lucuma-mkt/v1/' ) ),

@@ -1,15 +1,15 @@
-/* Lucuma Marketplace · public pieces (shortcodes placed in Bricks). White base, amber accent. */
+/* Lucuma Marketplace · public pieces (shortcodes placed in Bricks). Lucuma visual system: blue #174FCA, Montserrat, light base. */
 :root {
-  --lmf-text: #1c1f23; --lmf-body: #444a52; --lmf-muted: #6b7280; --lmf-line: #e4e6e9; --lmf-soft: #f5f6f7;
-  --lmf-accent: #d97706; --lmf-accent-dk: #b45309; --lmf-r: 10px;
+  --lmf-text: #10151C; --lmf-body: #3E4653; --lmf-muted: #5B6472; --lmf-line: #E3E8F0; --lmf-soft: #F7F9FC;
+  --lmf-accent: #174FCA; --lmf-accent-dk: #0D2F7B; --lmf-tint: #EAF0FC; --lmf-r: 10px; --lmf-rb: 6px;
 }
 .lmf-search, .lmf-cats, .lmf-grid, .lmf-chips, .lmf-filters, .lmf-gallery, .lmf-facts, .lmf-specs, .lmf-dealer, .lmf-crumbs, .lmf-empty { font-family: inherit; color: var(--lmf-text); }
 .lmf-search *, .lmf-grid *, .lmf-dealer * { box-sizing: border-box; }
 
 /* search */
-.lmf-search { display: grid; grid-template-columns: 1.6fr 1fr auto; gap: 10px; padding: 10px; background: #fff; border: 1px solid var(--lmf-line); border-radius: 14px; box-shadow: 0 10px 30px rgba(17, 24, 39, .08); }
+.lmf-search { display: grid; grid-template-columns: 1.6fr 1fr auto; gap: 10px; padding: 10px; background: #fff; border: 1px solid var(--lmf-line); border-radius: 14px; box-shadow: 0 10px 30px rgba(16, 21, 28, .08); }
 .lmf-search input, .lmf-search select { height: 54px; padding: 0 16px; border: 1px solid var(--lmf-line); border-radius: var(--lmf-r); font: 400 16px/1 inherit; color: var(--lmf-text); background: #fff; min-width: 0; }
-.lmf-search button, .lmf-kw button, .lmf-btn { height: 54px; padding: 0 26px; border: 0; border-radius: var(--lmf-r); background: var(--lmf-accent); color: #fff; font: 700 16px/1 inherit; cursor: pointer; white-space: nowrap; }
+.lmf-search button, .lmf-kw button, .lmf-btn { height: 54px; padding: 0 26px; border: 0; border-radius: var(--lmf-rb); background: var(--lmf-accent); color: #fff; font: 700 16px/1 inherit; cursor: pointer; white-space: nowrap; }
 .lmf-search button:hover, .lmf-kw button:hover, .lmf-btn:hover { background: var(--lmf-accent-dk); color: #fff; }
 @media (max-width: 767px) { .lmf-search { grid-template-columns: 1fr; } }
 
@@ -46,8 +46,8 @@
 .lmf-price { font-size: 19px; font-weight: 800; color: var(--lmf-text); }
 .lmf-loc { font-size: 13px; color: var(--lmf-muted); text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .lmf-badge { position: absolute; left: 10px; top: 10px; padding: 3px 10px; border-radius: 99px; font-size: 12px; font-weight: 700; background: #fff; color: var(--lmf-text); }
-.lmf-badge.sold { background: #1c1f23; color: #fff; }
-.lmf-badge.pending { background: #fff4e5; color: var(--lmf-accent-dk); }
+.lmf-badge.sold { background: #10151C; color: #fff; }
+.lmf-badge.pending { background: #FDF4DF; color: #8A5A00; }
 .lmf-bigprice .lmf-badge { position: static; margin-left: 10px; vertical-align: middle; }
 .lmf-found { margin: 0 0 12px; color: var(--lmf-muted); font-size: 14px; }
 .lmf-pages ul { display: flex; gap: 6px; list-style: none; padding: 0; margin: 28px 0 0; }
