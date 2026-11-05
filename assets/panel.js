@@ -1,6 +1,7 @@
 /* Lucuma Marketplace · dealer panel. No build, no dependencies. Views by hash:
  *   #/            listings      #/new          add equipment
  *   #/edit/ID     edit          #/profile      company card
+ *   #/import      CSV import (preview, then batches with progress)
  */
 (function () {
   'use strict';
@@ -71,7 +72,7 @@
     if (text && !bad) setTimeout(function () { if (m.textContent === text) { m.textContent = ''; m.className = 'lmp-msg'; } }, 4000);
   }
   function nav() {
-    return '<a class="lmp-btn ghost" href="#/profile">Company profile</a><a class="lmp-btn ghost" href="' + esc(LMP.logout) + '">Log out</a>';
+    return '<a class="lmp-btn ghost" href="#/import">Import</a><a class="lmp-btn ghost" href="#/profile">Company profile</a><a class="lmp-btn ghost" href="' + esc(LMP.logout) + '">Log out</a>';
   }
 
   /* ---------------------------------------------------------------- list */
@@ -343,6 +344,68 @@
     }).catch(function (e) { message(e.message, true); });
   }
 
+  /* ---------------------------------------------------------------- import */
+  function viewImport() {
+    shell('Import inventory', '<a class="lmp-btn ghost" href="#/">← Back to list</a>',
+      '<form class="lmp-form lmp-import"><section><h3>1. Get the template</h3>' +
+      '<p class="lmp-muted">One row per unit. Photos go as links separated by <b>|</b>. Categories and makes can use the names from your current listings (for example "Track Skid Steers" or "Deere"): we match them. Re-importing the same stock numbers updates those listings.</p>' +
+      '<button type="button" class="lmp-btn ghost" data-tpl>Download CSV template</button></section>' +
+      '<section><h3>2. Upload your file</h3><div class="lmp-grid">' +
+      (LMP.admin ? field('Import for dealer', '<select name="dealer"><option value="">Loading dealers…</option></select>') : '') +
+      field('CSV file', '<input type="file" name="file" accept=".csv,text/csv">', 'Up to 2,000 rows · 5 MB', !LMP.admin) +
+      '</div><div class="lmp-save" style="margin:12px 0 0"><button class="lmp-btn" type="submit">Check file</button></div></section>' +
+      '<section class="lmp-preview" hidden></section></form>');
+    var form = root.querySelector('.lmp-import'), prev = form.querySelector('.lmp-preview');
+    if (LMP.admin) api('dealers').then(function (ds) {
+      form.elements.dealer.innerHTML = '<option value="">Choose a dealer</option>' + ds.map(function (d) { return '<option value="' + d.id + '">' + esc(d.company) + '</option>'; }).join('');
+    }).catch(function (e) { message(e.message, true); });
+    form.querySelector('[data-tpl]').addEventListener('click', function () {
+      fetch(LMP.api + 'import/template', { headers: { 'X-WP-Nonce': LMP.nonce }, credentials: 'same-origin' })
+        .then(function (r) { return r.text(); }).then(function (csv) {
+          var a = document.createElement('a');
+          a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = 'inventory-template.csv'; a.click();
+        });
+    });
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var f = form.elements.file.files[0];
+      if (!f) { message('Choose a CSV file.', true); return; }
+      if (LMP.admin && !form.elements.dealer.value) { message('Choose the dealer.', true); return; }
+      var fd = new FormData(); fd.append('file', f, f.name);
+      if (LMP.admin) fd.append('dealer', form.elements.dealer.value);
+      message('Checking ' + f.name + '…');
+      api('import', { body: fd }).then(function (j) { message(''); preview(j); }).catch(function (err) { message(err.message, true); });
+    });
+    function preview(j) {
+      prev.hidden = false;
+      prev.innerHTML = '<h3>3. Review and import</h3><p><b>' + j.ready + '</b> of ' + j.total + ' rows ready' +
+        (j.updates ? ' (' + j.updates + ' will update existing listings)' : '') + ' · ' + j.photos + ' photos to download' +
+        (j.with_errors ? ' · <span style="color:#b42318"><b>' + j.with_errors + '</b> with problems (they will be skipped)</span>' : '') + '</p>' +
+        '<div style="max-height:360px;overflow:auto;margin:10px 0"><table class="lmp-table"><thead><tr><th>Row</th><th>Unit</th><th>Category</th><th>Stock #</th><th>Photos</th><th></th></tr></thead><tbody>' +
+        j.rows.map(function (r) {
+          return '<tr><td>' + r.row + '</td><td>' + esc(r.label) + '</td><td>' + esc(r.category || '—') + '</td><td>' + esc(r.stock || '—') + '</td><td>' + r.photos + '</td><td>' +
+            (r.errors.length ? '<span style="color:#b42318">' + esc(r.errors.join(' · ')) + '</span>' : (r.update ? 'Update' : 'New')) + '</td></tr>';
+        }).join('') + '</tbody></table></div>' +
+        (j.ready ? '<div class="lmp-save" style="margin:0"><button type="button" class="lmp-btn" data-go>Import ' + j.ready + ' listings</button><span class="lmp-muted" data-prog></span></div>' +
+          '<div class="lmp-bar-prog" hidden><i></i></div>' : '<p class="lmp-muted">Fix the rows and upload the file again.</p>');
+      var go = prev.querySelector('[data-go]');
+      if (!go) return;
+      go.addEventListener('click', function () {
+        go.disabled = true;
+        var bar = prev.querySelector('.lmp-bar-prog'), prog = prev.querySelector('[data-prog]'); bar.hidden = false;
+        (function step() {
+          api('import/' + j.job + '/run', { body: { limit: 2 } }).then(function (s) {
+            bar.firstChild.style.width = Math.round(s.next / s.total * 100) + '%';
+            prog.textContent = s.next + ' of ' + s.total + ' rows · ' + s.imported + ' imported' + (s.failed ? ' · ' + s.failed + ' failed' : '');
+            if (!s.finished) return step();
+            message('Import finished: ' + s.imported + ' listings imported' + (s.failed ? ', ' + s.failed + ' failed' : '') + '.');
+            go.outerHTML = '<a class="lmp-btn" href="#/">See your listings</a>';
+          }).catch(function (err) { message(err.message + ' — click Import again to continue.', true); go.disabled = false; });
+        })();
+      });
+    }
+  }
+
   /* ---------------------------------------------------------------- router */
   function route() {
     var h = location.hash.replace(/^#\/?/, '');
@@ -350,6 +413,7 @@
     if (m) return viewForm(+m[1]);
     if (h === 'new') return viewForm(null);
     if (h === 'profile') return viewProfile();
+    if (h === 'import') return viewImport();
     return viewList();
   }
   window.addEventListener('hashchange', route);

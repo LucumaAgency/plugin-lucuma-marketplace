@@ -41,6 +41,17 @@ en el archivo, con filtros `?q=` `?eqcat=` `?make=` `?dealer=` y paginación), `
 `[lm_archive_title]`; en la ficha `[lm_breadcrumbs]` `[lm_price]` `[lm_gallery]` `[lm_facts]` `[lm_specs]`
 `[lm_dealer]`. Nunca usar `?cat=` (reservado por WordPress). Vendidos al final del listado.
 
+## Importador (0.5.0)
+Panel → Import (`#/import`): plantilla CSV, subir archivo, vista previa por fila (categoría y marca
+resueltas con alias; errores marcados) e importación en tandas con barra de avance. Columnas:
+`stock_number, category, make, model, year, hours, mileage, price, call_for_price, condition, status,
+serial, city, state, zip, title, description, video_url, photos` (+ `spec:<clave>`); acepta alias
+(`stock`, `manufacturer`, `vin`, `images`…) y separador `,` o `;`. `photos`: URLs separadas por `|`.
+Reimportar actualiza por número de stock (por dealer); las fotos se bajan una vez (`_lm_source_url`).
+El admin importa a nombre de un dealer. API: `GET /import/template`, `POST /import` (multipart `file`
+o JSON `rows`, `dealer`), `POST /import/{job}/run {limit}`. No lee Sandhills directamente (Cloudflare):
+el inventario de un dealer de Sandhills entra como CSV o feed oficial.
+
 ## Siguiente (outline, orden de trabajo)
 Importador CSV/Sandhills · tabla propia de búsqueda + buscador ·
 contactos y medición · páginas SEO de categoría/marca/modelo · widget para la web de Kurtz.

@@ -76,3 +76,7 @@
   .lmp-table td.lmp-thumb { grid-row: span 4; }
 }
 @media (max-width: 480px) { .lmp-grid { grid-template-columns: 1fr; } }
+
+.lmp-bar-prog { height: 8px; margin-top: 12px; border-radius: 99px; background: var(--lmp-bg); overflow: hidden; }
+.lmp-bar-prog i { display: block; height: 100%; width: 0; background: var(--lmp-accent); transition: width .3s; }
+.lmp input[type=file] { padding: 8px 0; }

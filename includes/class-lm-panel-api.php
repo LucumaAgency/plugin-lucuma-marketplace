@@ -50,7 +50,8 @@ class LM_Panel_Api {
 			[ 'methods' => 'POST', 'permission_callback' => $dealer, 'callback' => [ __CLASS__, 'save_profile' ] ],
 		] );
 		register_rest_route( self::NS, '/dealers', [
-			'methods' => 'POST', 'permission_callback' => $admin, 'callback' => [ __CLASS__, 'invite' ],
+			[ 'methods' => 'POST', 'permission_callback' => $admin, 'callback' => [ __CLASS__, 'invite' ] ],
+			[ 'methods' => 'GET', 'permission_callback' => fn() => current_user_can( 'edit_others_lm_equipments' ), 'callback' => [ __CLASS__, 'dealers' ] ],
 		] );
 	}
 
@@ -143,8 +144,14 @@ class LM_Panel_Api {
 		return self::save( $p->ID, (array) $req->get_json_params() );
 	}
 
+	/** Same as the panel save, for the importer: new listings belong to $author (admins import for a dealer). */
+	public static function save_for( int $id, array $b, int $author ) {
+		if ( $id && ! current_user_can( 'edit_post', $id ) ) return new WP_Error( 'not_found', 'Not found.', [ 'status' => 404 ] );
+		return self::save( $id, $b, $author );
+	}
+
 	/** Create or update from the panel form. Validation of specs and formats: LM_Specs::after_save. */
-	private static function save( int $id, array $b ) {
+	private static function save( int $id, array $b, int $author = 0 ) {
 		$cat = LM_Rest::find_term( LM_Model::CATEGORY, (string) ( $b['category'] ?? '' ) );
 		if ( ! $cat ) return new WP_Error( 'category', 'Pick a category.', [ 'status' => 400 ] );
 		$make = LM_Rest::find_term( LM_Model::MAKE, (string) ( $b['make'] ?? '' ) );
@@ -165,7 +172,7 @@ class LM_Panel_Api {
 		if ( $id ) {
 			$data['ID'] = $id;
 		} else {
-			$data['post_author'] = get_current_user_id();
+			$data['post_author'] = ( $author && current_user_can( 'edit_others_lm_equipments' ) ) ? $author : get_current_user_id();
 			if ( ! current_user_can( 'publish_lm_equipments' ) ) $data['post_status'] = 'draft';
 		}
 		$id = wp_insert_post( wp_slash( $data ), true );
@@ -275,6 +282,12 @@ class LM_Panel_Api {
 		}
 		if ( ! empty( $b['name'] ) ) wp_update_user( [ 'ID' => $id, 'display_name' => sanitize_text_field( (string) $b['name'] ) ] );
 		return self::profile();
+	}
+
+	/** Admins: dealers to import for. */
+	public static function dealers() {
+		return array_map( fn( $u ) => [ 'id' => $u->ID, 'company' => get_user_meta( $u->ID, 'lm_company', true ) ?: $u->display_name ],
+			get_users( [ 'role' => LM_Model::ROLE, 'orderby' => 'display_name' ] ) );
 	}
 
 	/** Decision 1a: Lucuma invites. Returns the set-password link (email delivery is not assumed). */
