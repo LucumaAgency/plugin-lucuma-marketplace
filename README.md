@@ -24,6 +24,16 @@ refresca solo el rol Dealer y las reglas de URL una vez por versión (`lm_versio
 - `POST /models` `{make, model}`: busca o crea el modelo bajo una marca existente (dealers y admin; la marca acepta alias, p. ej. "Deere").
 - `GET /resolve?category=…&make=…`: traduce un nombre (de Sandhills u otro origen) a la categoría o marca del catálogo, por nombre, slug o alias (`lm_aliases`).
 
+## Panel del dealer (0.3.0)
+- Página `/dealer/` (shortcode `[lm_dealer_panel]`, se crea sola). App sin dependencias en `assets/panel.js`:
+  lista con estado rápido, formulario (categoría → specs, marca → modelos, fotos arrastrando, precio,
+  ubicación), perfil de empresa con logo. Publica directo (decisión 2a); "Save as draft" opcional.
+- Los dealers no entran al wp-admin ni ven la barra; al iniciar sesión van al panel. Solo ven sus fotos.
+- Invitación (decisión 1a): `POST /lucuma-mkt/v1/dealers {email, company, name?, phone?, city?, state?}` →
+  enlace para crear contraseña (no depende del correo). También vale Usuarios → Añadir con rol Dealer.
+- API del panel: `/my/equipment` (GET/POST), `/my/equipment/{id}` (GET/POST/DELETE),
+  `/my/equipment/{id}/status`, `/models?make=`, `/my/profile` (GET/POST).
+
 ## Siguiente (outline, orden de trabajo)
-Panel del dealer en el frente · importador CSV/Sandhills · tabla propia de búsqueda + buscador ·
+Importador CSV/Sandhills · tabla propia de búsqueda + buscador ·
 contactos y medición · páginas SEO de categoría/marca/modelo · widget para la web de Kurtz.

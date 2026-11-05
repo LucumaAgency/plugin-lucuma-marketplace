@@ -1,0 +1,78 @@
+/* Lucuma Marketplace · dealer panel. Scoped to .lmp so Bricks styles are not touched. */
+.lmp, .lmp-login {
+  --lmp-text: #1f2328; --lmp-muted: #6b7280; --lmp-line: #e3e5e8; --lmp-bg: #f6f7f8; --lmp-card: #fff;
+  --lmp-accent: #d97706; --lmp-accent-dk: #b45309; --lmp-ok: #0f7b4f; --lmp-bad: #b42318; --lmp-r: 8px;
+  max-width: 1100px; margin: 32px auto; padding: 0 16px; color: var(--lmp-text);
+  font: 400 15px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+.lmp *, .lmp *::before, .lmp *::after { box-sizing: border-box; }
+.lmp h2 { margin: 0; font-size: 26px; line-height: 1.2; }
+.lmp h3 { margin: 0 0 12px; font-size: 16px; }
+.lmp-muted { color: var(--lmp-muted); font-size: 13px; }
+.lmp-top { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.lmp-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.lmp-btn {
+  display: inline-flex; align-items: center; gap: 6px; padding: 9px 16px; border-radius: var(--lmp-r); border: 1px solid var(--lmp-accent);
+  background: var(--lmp-accent); color: #fff; font: 600 14px/1.2 inherit; text-decoration: none; cursor: pointer;
+}
+.lmp-btn:hover { background: var(--lmp-accent-dk); border-color: var(--lmp-accent-dk); color: #fff; }
+.lmp-btn.ghost { background: transparent; color: var(--lmp-text); border-color: var(--lmp-line); }
+.lmp-btn.ghost:hover { background: var(--lmp-bg); color: var(--lmp-text); }
+.lmp-btn:disabled { opacity: .6; cursor: wait; }
+.lmp-link { background: none; border: 0; padding: 0; color: var(--lmp-accent-dk); font: inherit; cursor: pointer; text-decoration: underline; }
+.lmp-link.danger { color: var(--lmp-bad); }
+.lmp-msg:empty { display: none; }
+.lmp-msg { margin: 0 0 12px; padding: 10px 14px; border-radius: var(--lmp-r); font-size: 14px; }
+.lmp-msg.ok { background: #e8f5ee; color: var(--lmp-ok); }
+.lmp-msg.bad { background: #fdecea; color: var(--lmp-bad); }
+.lmp-bar { margin-bottom: 12px; }
+.lmp-search, .lmp input[type=text], .lmp input[type=number], .lmp input[type=url], .lmp input[type=tel], .lmp select, .lmp textarea {
+  width: 100%; padding: 9px 11px; border: 1px solid var(--lmp-line); border-radius: var(--lmp-r); background: #fff; font: inherit; color: inherit;
+}
+.lmp-search { max-width: 420px; }
+.lmp input:focus, .lmp select:focus, .lmp textarea:focus { outline: 2px solid rgba(217, 119, 6, .35); border-color: var(--lmp-accent); }
+
+.lmp-table { width: 100%; border-collapse: collapse; background: var(--lmp-card); border: 1px solid var(--lmp-line); border-radius: var(--lmp-r); overflow: hidden; }
+.lmp-table th { text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--lmp-muted); padding: 10px 12px; border-bottom: 1px solid var(--lmp-line); background: var(--lmp-bg); }
+.lmp-table td { padding: 10px 12px; border-bottom: 1px solid var(--lmp-line); vertical-align: middle; }
+.lmp-table tr:last-child td { border-bottom: 0; }
+.lmp-thumb { width: 76px; }
+.lmp-thumb img, .lmp-thumb span { display: block; width: 64px; height: 48px; object-fit: cover; border-radius: 6px; background: var(--lmp-bg); }
+.lmp-name { font-weight: 600; color: var(--lmp-text); text-decoration: none; }
+.lmp-name:hover { text-decoration: underline; }
+.lmp-status { width: auto; min-width: 120px; }
+.lmp-row-actions { white-space: nowrap; font-size: 14px; }
+.lmp-badge { display: inline-block; margin-left: 4px; padding: 1px 7px; border-radius: 99px; background: #fff4e5; color: var(--lmp-accent-dk); font-size: 11px; font-weight: 700; }
+.lmp-empty { padding: 40px 20px; text-align: center; background: var(--lmp-card); border: 1px dashed var(--lmp-line); border-radius: var(--lmp-r); }
+
+.lmp-form section { background: var(--lmp-card); border: 1px solid var(--lmp-line); border-radius: var(--lmp-r); padding: 18px; margin-bottom: 14px; }
+.lmp-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 16px; }
+.lmp-field { display: grid; gap: 4px; margin: 0; }
+.lmp-field > span { font-size: 13px; font-weight: 600; }
+.lmp-field small { color: var(--lmp-muted); font-size: 12px; }
+.lmp-field.wide { grid-column: 1 / -1; }
+.lmp-check { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+.lmp-align { align-self: end; padding-bottom: 10px; }
+.lmp-drop { border: 2px dashed var(--lmp-line); border-radius: var(--lmp-r); padding: 14px; }
+.lmp-drop.over { border-color: var(--lmp-accent); background: #fff8ec; }
+.lmp-drop p { margin: 0 0 10px; font-size: 14px; }
+.lmp-photos { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; }
+.lmp-photos figure { position: relative; margin: 0; aspect-ratio: 4 / 3; border-radius: 6px; overflow: hidden; background: var(--lmp-bg); cursor: grab; display: flex; align-items: center; justify-content: center; }
+.lmp-photos figure.up { cursor: default; color: var(--lmp-muted); font-size: 13px; }
+.lmp-photos img { width: 100%; height: 100%; object-fit: cover; }
+.lmp-photos em { position: absolute; left: 6px; top: 6px; padding: 1px 7px; border-radius: 99px; background: var(--lmp-accent); color: #fff; font: 700 11px/1.6 inherit; }
+.lmp-photos button { position: absolute; right: 6px; top: 6px; width: 24px; height: 24px; border: 0; border-radius: 50%; background: rgba(0,0,0,.6); color: #fff; font-size: 16px; line-height: 1; cursor: pointer; }
+.lmp-save { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 6px 0 40px; }
+.lmp-logo img { max-height: 80px; max-width: 240px; vertical-align: middle; margin-right: 10px; }
+.lmp-login { text-align: center; }
+.lmp-login .lmp-btn { margin-top: 8px; }
+
+@media (max-width: 760px) {
+  .lmp-grid { grid-template-columns: 1fr 1fr; }
+  .lmp-table thead { display: none; }
+  .lmp-table, .lmp-table tbody, .lmp-table tr, .lmp-table td { display: block; width: 100%; }
+  .lmp-table tr { display: grid; grid-template-columns: 76px 1fr; gap: 4px 10px; padding: 10px; border-bottom: 1px solid var(--lmp-line); }
+  .lmp-table td { padding: 0; border: 0; }
+  .lmp-table td.lmp-thumb { grid-row: span 4; }
+}
+@media (max-width: 480px) { .lmp-grid { grid-template-columns: 1fr; } }

@@ -45,6 +45,7 @@ class LM_Model {
 	public static function maybe_upgrade() {
 		if ( get_option( 'lm_version' ) === LM_VERSION ) return;
 		self::add_roles();
+		LM_Panel::ensure_page();
 		flush_rewrite_rules();
 		update_option( 'lm_version', LM_VERSION );
 	}
