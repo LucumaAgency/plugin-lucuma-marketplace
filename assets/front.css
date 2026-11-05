@@ -41,9 +41,10 @@
 .lmf-card h3 a { color: var(--lmf-text); text-decoration: none; }
 .lmf-card h3 a:hover { text-decoration: underline; }
 .lmf-meta { margin: 0; font-size: 14px; color: var(--lmf-muted); }
-.lmf-card-foot { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-top: auto; padding-top: 10px; }
+.lmf-card-foot { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-top: auto; padding-top: 10px; min-width: 0; }
+.lmf-price { flex: none; }
 .lmf-price { font-size: 19px; font-weight: 800; color: var(--lmf-text); }
-.lmf-loc { font-size: 13px; color: var(--lmf-muted); text-align: right; }
+.lmf-loc { font-size: 13px; color: var(--lmf-muted); text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .lmf-badge { position: absolute; left: 10px; top: 10px; padding: 3px 10px; border-radius: 99px; font-size: 12px; font-weight: 700; background: #fff; color: var(--lmf-text); }
 .lmf-badge.sold { background: #1c1f23; color: #fff; }
 .lmf-badge.pending { background: #fff4e5; color: var(--lmf-accent-dk); }
@@ -55,7 +56,7 @@
 .lmf-empty { padding: 40px; text-align: center; border: 1px dashed var(--lmf-line); border-radius: var(--lmf-r); }
 @media (max-width: 1199px) { .lmf-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 767px) { .lmf-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; } .lmf-card h3 { font-size: 15px; } .lmf-price { font-size: 16px; } .lmf-loc { display: none; } }
-@media (max-width: 420px) { .lmf-grid { grid-template-columns: 1fr; } .lmf-loc { display: block; } }
+@media (max-width: 340px) { .lmf-grid { grid-template-columns: 1fr; } .lmf-loc { display: block; } }
 
 /* archive filters */
 .lmf-h1 { margin: 0; font-size: 38px; line-height: 1.15; }
