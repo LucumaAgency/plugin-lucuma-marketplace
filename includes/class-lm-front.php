@@ -242,7 +242,16 @@ class LM_Front {
 			( $place ? '<span class="lmf-meta">' . esc_html( $place ) . '</span>' : '' ) .
 			( $phone ? '<a class="lmf-btn" href="tel:' . esc_attr( preg_replace( '/[^0-9+]/', '', $phone ) ) . '" data-lm-event="call">Call ' . esc_html( $phone ) . '</a>' : '' ) .
 			'<a class="lmf-btn ghost" href="mailto:' . esc_attr( $email ) . '?subject=' . $subject . '" data-lm-event="email">Email dealer</a>' .
-			'<a class="lmf-more" href="' . self::archive_url( [ 'dealer' => $u ] ) . '">More equipment from this dealer →</a></div>';
+			'<a class="lmf-more" href="' . self::archive_url( [ 'dealer' => $u ] ) . '">More equipment from this dealer →</a>' . self::source( $p->ID, $company ) . '</div>';
+	}
+
+	/** Aggregated units: say where the listing comes from and link to the original. */
+	private static function source( int $id, string $company ): string {
+		$url = self::m( $id, 'lm_source_url' );
+		if ( ! $url ) return '';
+		$host = preg_replace( '/^www\./', '', (string) wp_parse_url( $url, PHP_URL_HOST ) );
+		return '<p class="lmf-source">Listing from ' . esc_html( $company ) . '\'s website (' . esc_html( $host ) . '). Details may have changed. ' .
+			'<a href="' . esc_url( $url ) . '" target="_blank" rel="noopener" data-lm-event="source">View the original listing ↗</a></p>';
 	}
 
 	public static function breadcrumbs() {

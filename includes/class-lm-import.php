@@ -17,7 +17,7 @@ class LM_Import {
 	const NS       = 'lucuma-mkt/v1';
 	const MAX_ROWS = 2000;
 	const COLUMNS  = [ 'stock_number', 'category', 'make', 'model', 'year', 'hours', 'mileage', 'price', 'call_for_price',
-		'condition', 'status', 'serial', 'city', 'state', 'zip', 'title', 'description', 'video_url', 'photos' ];
+		'condition', 'status', 'serial', 'city', 'state', 'zip', 'title', 'description', 'video_url', 'photos', 'source_url' ];
 	const ALIASES  = [ 'stock' => 'stock_number', 'stock_#' => 'stock_number', 'stock_no' => 'stock_number', 'manufacturer' => 'make',
 		'type' => 'category', 'hrs' => 'hours', 'miles' => 'mileage', 'vin' => 'serial', 'serial_number' => 'serial', 'images' => 'photos',
 		'photo_urls' => 'photos', 'image_urls' => 'photos', 'notes' => 'description', 'postal_code' => 'zip' ];
@@ -115,6 +115,7 @@ class LM_Import {
 			'stock' => (string) ( $r['stock_number'] ?? '' ), 'serial' => (string) ( $r['serial'] ?? '' ),
 			'city' => (string) ( $r['city'] ?? '' ), 'state' => (string) ( $r['state'] ?? '' ), 'zip' => (string) ( $r['zip'] ?? '' ),
 			'description' => (string) ( $r['description'] ?? '' ), 'video_url' => (string) ( $r['video_url'] ?? '' ),
+			'source_url' => (string) ( $r['source_url'] ?? '' ),
 			'specs' => $specs,
 		];
 		$label = trim( implode( ' ', array_filter( [ $payload['year'], $make ? wp_specialchars_decode( $make->name ) : ( $r['make'] ?? '' ), $payload['model'] ] ) ) );

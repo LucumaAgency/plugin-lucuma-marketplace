@@ -34,6 +34,7 @@ class LM_Model {
 		'lm_zip'            => [ 'type' => 'string' ],
 		'lm_country'        => [ 'type' => 'string' ],
 		'lm_video_url'      => [ 'type' => 'string', 'format' => 'uri' ],
+		'lm_source_url'     => [ 'type' => 'string', 'format' => 'uri' ], // original listing on the dealer's own site (aggregated units)
 	];
 
 	public static function init() {

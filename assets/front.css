@@ -103,3 +103,5 @@
 .lmf-btn.ghost { background: #fff; color: var(--lmf-text); border: 1px solid var(--lmf-line); }
 .lmf-btn.ghost:hover { border-color: var(--lmf-text); background: #fff; color: var(--lmf-text); }
 .lmf-more { font-size: 14px; color: var(--lmf-accent-dk); text-decoration: none; margin-top: 4px; }
+.lmf-source { margin: 10px 0 0; padding-top: 10px; border-top: 1px solid var(--lmf-line, #E5E7EB); font-size: 12px; line-height: 1.5; color: var(--lmf-muted, #6B7280); }
+.lmf-source a { color: var(--lmf-accent-dk); }

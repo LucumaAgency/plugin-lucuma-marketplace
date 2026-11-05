@@ -202,12 +202,12 @@ class LM_Panel_Api {
 		$map = [
 			'year' => 'lm_year', 'hours' => 'lm_hours', 'mileage' => 'lm_mileage', 'price' => 'lm_price',
 			'condition' => 'lm_condition', 'status' => 'lm_status', 'stock' => 'lm_stock_number', 'serial' => 'lm_serial',
-			'city' => 'lm_city', 'state' => 'lm_state', 'zip' => 'lm_zip', 'video_url' => 'lm_video_url',
+			'city' => 'lm_city', 'state' => 'lm_state', 'zip' => 'lm_zip', 'video_url' => 'lm_video_url', 'source_url' => 'lm_source_url',
 		];
 		foreach ( $map as $in => $key ) {
 			if ( ! array_key_exists( $in, $b ) ) continue;
 			$v = is_string( $b[ $in ] ) ? trim( sanitize_text_field( $b[ $in ] ) ) : $b[ $in ];
-			if ( $in === 'video_url' ) $v = esc_url_raw( (string) $v );
+			if ( $in === 'video_url' || $in === 'source_url' ) $v = esc_url_raw( (string) $v );
 			if ( $v === '' || $v === null ) delete_post_meta( $id, $key );
 			else update_post_meta( $id, $key, in_array( $in, [ 'year', 'hours', 'mileage', 'price' ], true ) ? ( is_numeric( $v ) ? $v + 0 : '' ) : $v );
 		}
