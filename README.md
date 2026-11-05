@@ -34,6 +34,13 @@ refresca solo el rol Dealer y las reglas de URL una vez por versión (`lm_versio
 - API del panel: `/my/equipment` (GET/POST), `/my/equipment/{id}` (GET/POST/DELETE),
   `/my/equipment/{id}/status`, `/models?make=`, `/my/profile` (GET/POST).
 
+## Piezas públicas para Bricks (0.4.0)
+Shortcodes que Bricks coloca con su elemento Shortcode (diseño en Bricks, lógica aquí; estilos en
+`assets/front.css`): `[lm_search]`, `[lm_categories]`, `[lm_makes]`, `[lm_grid count="8"]` (y `main="1"`
+en el archivo, con filtros `?q=` `?eqcat=` `?make=` `?dealer=` y paginación), `[lm_filters]`,
+`[lm_archive_title]`; en la ficha `[lm_breadcrumbs]` `[lm_price]` `[lm_gallery]` `[lm_facts]` `[lm_specs]`
+`[lm_dealer]`. Nunca usar `?cat=` (reservado por WordPress). Vendidos al final del listado.
+
 ## Siguiente (outline, orden de trabajo)
 Importador CSV/Sandhills · tabla propia de búsqueda + buscador ·
 contactos y medición · páginas SEO de categoría/marca/modelo · widget para la web de Kurtz.
