@@ -173,6 +173,10 @@ class LM_Front {
 	public static function archive_title() {
 		$title = 'Heavy equipment for sale';
 		if ( is_tax() ) $title = wp_specialchars_decode( single_term_title( '', false ) ) . ( is_tax( LM_Model::MAKE ) ? ' equipment' : '' ) . ' for sale';
+		if ( is_author() ) {
+			global $wp_query;
+			return '<h2 class="lmf-h2">Equipment for sale (' . (int) $wp_query->found_posts . ')</h2>';
+		}
 		if ( ! empty( $_GET['q'] ) ) $title = 'Results for “' . sanitize_text_field( wp_unslash( $_GET['q'] ) ) . '”';
 		return '<h1 class="lmf-h1">' . esc_html( $title ) . '</h1>';
 	}
@@ -242,7 +246,7 @@ class LM_Front {
 			( $place ? '<span class="lmf-meta">' . esc_html( $place ) . '</span>' : '' ) .
 			( $phone ? '<a class="lmf-btn" href="tel:' . esc_attr( preg_replace( '/[^0-9+]/', '', $phone ) ) . '" data-lm-event="call">Call ' . esc_html( $phone ) . '</a>' : '' ) .
 			'<a class="lmf-btn ghost" href="mailto:' . esc_attr( $email ) . '?subject=' . $subject . '" data-lm-event="email">Email dealer</a>' .
-			'<a class="lmf-more" href="' . self::archive_url( [ 'dealer' => $u ] ) . '">More equipment from this dealer →</a>' . self::source( $p->ID, $company ) . '</div>';
+			'<a class="lmf-more" href="' . esc_url( LM_Dealers::url( $u ) ) . '">More equipment from this dealer →</a>' . self::source( $p->ID, $company ) . '</div>';
 	}
 
 	/** Aggregated units: say where the listing comes from and link to the original. */

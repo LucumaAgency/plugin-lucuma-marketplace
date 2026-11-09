@@ -11,6 +11,9 @@
  *                              shuffled on every visit (min = only with that many upcoming; title="" = no heading).
  *                              Lists placed after it on the same page skip the auctions it showed.
  *   [lm_auction_facts]         single auction: date, type, place, auctioneer, catalog button
+ *   /auctions/YYYY-MM/         auctions of one month, past ones included (query var lm_month)
+ *   [lm_auctions_title]        h1 + intro for the calendar or the month page
+ *   [lm_auction_months]        month chips: this month and the next ones with auctions
  *
  * Times are the auction's local time (site timezone, America/New_York), stored as "YYYY-MM-DDTHH:MM".
  */
@@ -44,7 +47,11 @@ class LM_Auctions {
 			add_meta_box( 'lm_auction', 'Auction details', [ __CLASS__, 'box' ], self::PT, 'normal', 'high' );
 		} );
 		add_action( 'save_post_' . self::PT, [ __CLASS__, 'save_box' ], 10, 2 );
-		foreach ( [ 'auctions', 'auctions_featured', 'auction_facts' ] as $s ) add_shortcode( 'lm_' . $s, [ __CLASS__, $s ] );
+		foreach ( [ 'auctions', 'auctions_featured', 'auction_facts', 'auctions_title', 'auction_months' ] as $s ) add_shortcode( 'lm_' . $s, [ __CLASS__, $s ] );
+		add_filter( 'query_vars', fn( $v ) => array_merge( $v, [ 'lm_month' ] ) );
+		add_action( 'init', function () {
+			add_rewrite_rule( '^auctions/(\\d{4}-\\d{2})/?$', 'index.php?post_type=' . self::PT . '&lm_month=$matches[1]', 'top' );
+		}, 15 ); // before LM_Model::maybe_upgrade (20) flushes the rules
 		add_action( 'wp_footer', [ __CLASS__, 'datalayer' ], 5 ); // after the consent defaults in <head>
 	}
 
@@ -123,6 +130,19 @@ class LM_Auctions {
 		return $s ? $s->format( 'g:i A' ) . ' ET' : '';
 	}
 
+	/** The month page being viewed ("2026-12"), or ''. */
+	public static function month(): string {
+		$m = (string) get_query_var( 'lm_month' );
+		return preg_match( '/^\d{4}-(0[1-9]|1[0-2])$/', $m ) ? $m : '';
+	}
+
+	public static function month_label( string $m ): string {
+		$d = DateTimeImmutable::createFromFormat( 'Y-m-d', $m . '-01', wp_timezone() );
+		return $d ? $d->format( 'F Y' ) : $m;
+	}
+
+	public static function month_url( string $m ): string { return home_url( '/auctions/' . $m . '/' ); }
+
 	/** Upcoming auction ids by date. */
 	private static function upcoming( array $extra = [] ): array {
 		return get_posts( array_merge( [
@@ -141,6 +161,11 @@ class LM_Auctions {
 		$q->set( 'orderby', 'meta_value' );
 		$q->set( 'order', 'ASC' );
 		$mq = [ [ 'key' => 'lm_start', 'value' => self::now(), 'compare' => '>=' ] ];
+		$month = self::month();
+		if ( $month ) {
+			$next = ( new DateTimeImmutable( $month . '-01' ) )->modify( '+1 month' )->format( 'Y-m' );
+			$mq = [ [ 'key' => 'lm_start', 'value' => [ $month . '-01T00:00', $next . '-01T00:00' ], 'compare' => 'BETWEEN' ] ];
+		}
 		$st = isset( $_GET['state'] ) ? strtoupper( sanitize_key( wp_unslash( $_GET['state'] ) ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
 		if ( $st ) $mq[] = [ 'key' => 'lm_state', 'value' => $st ];
 		$q->set( 'meta_query', $mq );
@@ -191,10 +216,51 @@ class LM_Auctions {
 			'</div></article>';
 	}
 
+	/** List of auction cards for the given ids (dealer profiles). */
+	public static function cards( array $ids ): string {
+		return $ids ? '<div class="lmf-auctions">' . implode( '', array_map( fn( $id ) => self::card( (int) $id ), $ids ) ) . '</div>' : '';
+	}
+
+	/** States of the upcoming auctions: "Pennsylvania" while all are in PA. */
+	public static function states_label(): string {
+		$st = [];
+		foreach ( self::upcoming() as $id ) { $s = strtoupper( (string) self::m( $id, 'lm_state' ) ); if ( $s ) $st[ $s ] = 1; }
+		return count( $st ) === 1 && isset( $st['PA'] ) ? 'Pennsylvania' : '';
+	}
+
+	public static function auctions_title() {
+		$where = self::states_label();
+		$month = self::month();
+		if ( $month ) {
+			$h = 'Equipment auctions' . ( $where ? ' in ' . $where : '' ) . ': ' . self::month_label( $month );
+			$p = 'Construction, farm and truck auctions scheduled for ' . self::month_label( $month ) . ', with dates, locations, auction type and a link to each catalog.';
+		} else {
+			$h = 'Heavy equipment auctions' . ( $where ? ' in ' . $where : '' );
+			$p = 'Upcoming construction, farm and truck auctions from dealers and auctioneers: dates, locations, auction type and catalogs. Bidding happens on each auctioneer\'s own site.';
+		}
+		return '<h1 class="lmf-h1">' . esc_html( $h ) . '</h1><p class="lmf-lead">' . esc_html( $p ) . '</p>';
+	}
+
+	/** Chips: All upcoming · this month · the next 3 months that have auctions. */
+	public static function auction_months() {
+		$cur = self::month();
+		$months = [];
+		foreach ( self::upcoming() as $id ) { $m = substr( (string) self::m( $id, 'lm_start' ), 0, 7 ); if ( $m ) $months[ $m ] = ( $months[ $m ] ?? 0 ) + 1; }
+		ksort( $months );
+		$months = array_slice( $months, 0, 4, true );
+		if ( $cur && ! isset( $months[ $cur ] ) ) $months = [ $cur => 0 ] + $months;
+		$out = '<a class="lmf-chip' . ( $cur ? '' : ' on' ) . '" href="' . esc_url( get_post_type_archive_link( self::PT ) ) . '">All upcoming</a>';
+		foreach ( $months as $m => $n ) {
+			$out .= '<a class="lmf-chip' . ( $cur === $m ? ' on' : '' ) . '" href="' . esc_url( self::month_url( $m ) ) . '">' . esc_html( self::month_label( $m ) ) . ( $n ? ' <span>' . $n . '</span>' : '' ) . '</a>';
+		}
+		return '<nav class="lmf-chips lmf-months" aria-label="Auctions by month">' . $out . '</nav>';
+	}
+
 	public static function auctions( $atts ) {
 		$a = shortcode_atts( [ 'count' => 6, 'main' => '0' ], $atts );
 		if ( $a['main'] === '1' ) {
 			global $wp_query;
+			if ( ! $wp_query->have_posts() && self::month() ) return '<div class="lmf-empty"><p><strong>No auctions listed for ' . esc_html( self::month_label( self::month() ) ) . ' yet.</strong></p><p><a href="' . esc_url( get_post_type_archive_link( self::PT ) ) . '">See all upcoming auctions</a></p></div>';
 			if ( ! $wp_query->have_posts() ) return '<div class="lmf-empty"><p><strong>No upcoming auctions listed yet.</strong></p><p>Running an equipment auction? <a href="mailto:contact@heavylisting.com">List it for free</a>.</p></div>';
 			$ids = array_values( array_diff( wp_list_pluck( $wp_query->posts, 'ID' ), self::$shown ) );
 			$pages = paginate_links( [ 'total' => $wp_query->max_num_pages, 'current' => max( 1, get_query_var( 'paged' ) ), 'type' => 'list', 'prev_text' => '←', 'next_text' => '→' ] );

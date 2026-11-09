@@ -155,7 +155,17 @@ class LM_Seo {
 			$where = LM_Auctions::online_only( $id ) ? ' (Online)' : ( $place ? ' in ' . $place : '' );
 			return get_the_title( $id ) . ( $d ? ': ' . $d->format( 'M j, Y' ) : '' ) . $where . ( LM_Auctions::ended( $id ) ? ' (Ended)' : '' );
 		}
-		if ( is_post_type_archive( LM_Auctions::PT ) ) return 'Heavy Equipment Auctions: Upcoming Dates and Locations';
+		if ( is_post_type_archive( LM_Auctions::PT ) ) {
+			$where = LM_Auctions::states_label();
+			$month = LM_Auctions::month();
+			if ( $month ) return 'Equipment Auctions' . ( $where ? ' in ' . $where : '' ) . ': ' . LM_Auctions::month_label( $month );
+			return 'Heavy Equipment Auctions' . ( $where ? ' in ' . $where : '' ) . ': Upcoming Dates';
+		}
+		if ( is_author() && LM_Dealers::is_dealer( get_queried_object() ) ) {
+			$u = get_queried_object_id();
+			$place = LM_Dealers::place( $u );
+			return LM_Dealers::company( $u ) . ': Used Equipment for Sale' . ( $place ? ' in ' . $place : '' );
+		}
 		return null;
 	}
 
@@ -213,7 +223,22 @@ class LM_Seo {
 				'. See the details and the auction catalog.';
 		}
 		if ( is_post_type_archive( LM_Auctions::PT ) ) {
-			return 'Calendar of upcoming heavy equipment auctions from dealers and auctioneers: dates, locations, auction type and catalogs. List your auction for free.';
+			$where = LM_Auctions::states_label();
+			$month = LM_Auctions::month();
+			if ( $month ) {
+				global $wp_query;
+				return (int) $wp_query->found_posts . ' construction, farm and truck auctions' . ( $where ? ' in ' . $where : '' ) . ' in ' . LM_Auctions::month_label( $month ) .
+					': dates, locations, auction type and catalogs, from dealers and auctioneers.';
+			}
+			return 'Calendar of upcoming heavy equipment auctions' . ( $where ? ' in ' . $where : '' ) . ' from dealers and auctioneers: dates, locations, auction type and catalogs. List your auction for free.';
+		}
+		if ( is_author() && LM_Dealers::is_dealer( get_queried_object() ) ) {
+			$u = get_queried_object_id();
+			$n = LM_Dealers::count_listings( $u );
+			$cats = array_keys( LM_Dealers::top_categories( $u, 3 ) );
+			$place = LM_Dealers::place( $u );
+			return 'Browse ' . $n . ' used ' . ( $n === 1 ? 'machine' : 'machines' ) . ' from ' . LM_Dealers::company( $u ) . ( $place ? ' in ' . $place : '' ) .
+				( $cats ? ': ' . strtolower( implode( ', ', $cats ) ) : '' ) . '. Contact the dealer directly, with no buyer fees.';
 		}
 		return null;
 	}
@@ -226,6 +251,10 @@ class LM_Seo {
 		$ours = is_post_type_archive( [ LM_Model::PT, LM_Auctions::PT ] ) || is_tax( [ LM_Model::CATEGORY, LM_Model::MAKE, LM_Model::MODEL ] );
 		if ( $ours && self::has_filters() ) return 'filtered';
 		if ( is_singular( LM_Auctions::PT ) && LM_Auctions::ended( get_queried_object_id() ) ) return 'ended auction';
+		if ( is_post_type_archive( LM_Auctions::PT ) && LM_Auctions::month() ) {
+			global $wp_query;
+			if ( ! $wp_query->found_posts ) return 'empty month';
+		}
 		if ( is_tax( [ LM_Model::CATEGORY, LM_Model::MAKE, LM_Model::MODEL ] ) ) {
 			$t = get_queried_object();
 			if ( ! self::term_indexable( $t ) ) return 'thin';
@@ -256,6 +285,8 @@ class LM_Seo {
 		if ( is_singular( LM_Model::PT ) ) {
 			$graph[] = self::product( get_queried_object_id() );
 			$graph[] = self::breadcrumbs( get_queried_object_id() );
+		} elseif ( is_author() && LM_Dealers::is_dealer( get_queried_object() ) ) {
+			$graph[] = self::dealer_org( get_queried_object_id() );
 		} elseif ( is_singular( LM_Auctions::PT ) ) {
 			$graph[] = self::event( get_queried_object_id() );
 		} elseif ( is_front_page() ) {
@@ -290,7 +321,7 @@ class LM_Seo {
 
 		$address = array_filter( [ '@type' => 'PostalAddress', 'addressLocality' => self::m( $id, 'lm_city' ),
 			'addressRegion' => self::m( $id, 'lm_state' ), 'postalCode' => self::m( $id, 'lm_zip' ), 'addressCountry' => 'US' ] );
-		$seller = [ '@type' => 'Organization', 'name' => self::dealer( $id ), 'address' => $address ];
+		$seller = [ '@type' => 'Organization', 'name' => self::dealer( $id ), 'address' => $address, 'url' => LM_Dealers::url( (int) get_post_field( 'post_author', $id ) ) ];
 
 		$p = [
 			'@type' => 'Product', '@id' => get_permalink( $id ) . '#product',
@@ -320,6 +351,18 @@ class LM_Seo {
 			];
 		}
 		return $p;
+	}
+
+	private static function dealer_org( int $u ): array {
+		$m = fn( $k ) => (string) get_user_meta( $u, $k, true );
+		$o = [ '@type' => 'Organization', '@id' => LM_Dealers::url( $u ) . '#dealer', 'name' => LM_Dealers::company( $u ), 'url' => LM_Dealers::url( $u ),
+			'address' => array_filter( [ '@type' => 'PostalAddress', 'streetAddress' => $m( 'lm_address' ), 'addressLocality' => $m( 'lm_city' ),
+				'addressRegion' => $m( 'lm_state' ), 'postalCode' => $m( 'lm_zip' ), 'addressCountry' => 'US' ] ) ];
+		if ( $m( 'lm_phone' ) ) $o['telephone'] = $m( 'lm_phone' );
+		if ( $m( 'lm_website' ) ) $o['sameAs'] = [ $m( 'lm_website' ) ];
+		$logo = (int) $m( 'lm_logo' );
+		if ( $logo && ( $src = wp_get_attachment_image_url( $logo, 'medium' ) ) ) $o['logo'] = $src;
+		return $o;
 	}
 
 	private static function event( int $id ): ?array {

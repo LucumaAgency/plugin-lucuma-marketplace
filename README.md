@@ -81,6 +81,17 @@ el inventario de un dealer de Sandhills entra como CSV o feed oficial.
   click_auction_catalog y view_auction.
 - Bricks: plantillas "LHM · Auctions archive" y "LHM · Auction single" (`bricks/gen.py`: subastas, subasta).
 
+## Dealers y remates por mes (0.10.0)
+- `includes/class-lm-dealers.php`: el archivo de autor pasa a `/dealers/<empresa>/` (author base "dealers"; slug =
+  nombre de la empresa, se actualiza solo al cambiar `lm_company`). Solo los dealers tienen perfil (otros autores: 404).
+  Shortcodes `[lm_dealers]` (directorio en la página /dealers/) y `[lm_dealer_profile]` (logo, contacto, "Visit website"
+  con `data-lm-event="dealer_website"`, remates próximos). En la ficha, "More equipment from this dealer" va al perfil.
+- Remates: `/auctions/AAAA-MM/` (query var `lm_month`, incluye pasados del mes), `[lm_auctions_title]` (h1 + intro según
+  calendario o mes; "in Pennsylvania" mientras todos sean de PA) y `[lm_auction_months]` (chips de meses).
+- SEO: títulos y descripciones para perfiles y meses, JSON-LD Organization del dealer, el vendedor del Product enlaza al
+  perfil, noindex de meses sin remates.
+- Bricks: plantilla "LHM · Dealer profile" (archiveType author) y página "Dealers" (`bricks/gen.py`: perfil_dealer, distribuidores).
+
 ## Siguiente (outline, orden de trabajo)
 Importador CSV/Sandhills · tabla propia de búsqueda + buscador ·
 contactos y medición · páginas SEO de categoría/marca/modelo · widget para la web de Kurtz.
