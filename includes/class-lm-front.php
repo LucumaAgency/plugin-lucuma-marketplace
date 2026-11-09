@@ -22,6 +22,21 @@ class LM_Front {
 			wp_enqueue_style( 'lm-front', plugins_url( 'assets/front.css', LM_DIR . '/lucuma-marketplace.php' ), [], LM_VERSION );
 		} );
 		add_action( 'pre_get_posts', [ __CLASS__, 'archive_query' ] );
+		add_action( 'wp_footer', [ __CLASS__, 'plan_prefill' ] );
+	}
+
+	/**
+	 * ?plan=medium (or auction-plan, promoted…) preselects that plan in any form on the page: the plan buttons on
+	 * /pricing/ link to the dealer and auction forms with it. Matches the start of the option text ("Medium (up to 100)").
+	 */
+	public static function plan_prefill() {
+		if ( empty( $_GET['plan'] ) ) return;
+		$plan = str_replace( '-', ' ', sanitize_key( wp_unslash( $_GET['plan'] ) ) );
+		?>
+<script>(function(){var p=<?php echo wp_json_encode( $plan ); ?>;function go(){document.querySelectorAll('form select').forEach(function(s){
+for(var i=0;i<s.options.length;i++){if(s.options[i].text.toLowerCase().indexOf(p)===0){s.selectedIndex=i;s.dispatchEvent(new Event('change',{bubbles:true}));return;}}});}
+if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',go);}else{go();}})();</script>
+		<?php
 	}
 
 	/* ------------------------------------------------------------------ helpers */
