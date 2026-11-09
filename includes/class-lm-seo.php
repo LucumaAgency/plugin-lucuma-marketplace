@@ -152,7 +152,8 @@ class LM_Seo {
 			$id = get_queried_object_id();
 			$d = LM_Auctions::dt( (string) self::m( $id, 'lm_start' ) );
 			$place = LM_Auctions::place( $id );
-			return get_the_title( $id ) . ( $d ? ': ' . $d->format( 'M j, Y' ) : '' ) . ( $place ? ' in ' . $place : '' ) . ( LM_Auctions::ended( $id ) ? ' (Ended)' : '' );
+			$where = LM_Auctions::online_only( $id ) ? ' (Online)' : ( $place ? ' in ' . $place : '' );
+			return get_the_title( $id ) . ( $d ? ': ' . $d->format( 'M j, Y' ) : '' ) . $where . ( LM_Auctions::ended( $id ) ? ' (Ended)' : '' );
 		}
 		if ( is_post_type_archive( LM_Auctions::PT ) ) return 'Heavy Equipment Auctions: Upcoming Dates and Locations';
 		return null;
@@ -208,7 +209,7 @@ class LM_Seo {
 		if ( is_singular( LM_Auctions::PT ) ) {
 			$id = get_queried_object_id();
 			$place = LM_Auctions::place( $id );
-			return LM_Auctions::type_label( $id ) . ' by ' . LM_Auctions::auctioneer( $id ) . ' on ' . LM_Auctions::when( $id ) . ( $place ? ' in ' . $place : '' ) .
+			return LM_Auctions::type_label( $id ) . ' by ' . LM_Auctions::auctioneer( $id ) . ' on ' . LM_Auctions::when( $id ) . ( $place && ! LM_Auctions::online_only( $id ) ? ' in ' . $place : '' ) .
 				'. See the details and the auction catalog.';
 		}
 		if ( is_post_type_archive( LM_Auctions::PT ) ) {
@@ -331,7 +332,7 @@ class LM_Seo {
 		$address = array_filter( [ '@type' => 'PostalAddress', 'streetAddress' => self::m( $id, 'lm_address' ), 'addressLocality' => self::m( $id, 'lm_city' ),
 			'addressRegion' => self::m( $id, 'lm_state' ), 'postalCode' => self::m( $id, 'lm_zip' ), 'addressCountry' => 'US' ] );
 		$loc = [];
-		if ( $mode !== 'Online' || count( $address ) > 2 ) $loc[] = [ '@type' => 'Place', 'name' => LM_Auctions::auctioneer( $id ), 'address' => $address ];
+		if ( ! empty( $address['addressLocality'] ) ) $loc[] = [ '@type' => 'Place', 'name' => LM_Auctions::auctioneer( $id ), 'address' => $address ];
 		if ( $mode !== 'Offline' && $url ) $loc[] = [ '@type' => 'VirtualLocation', 'url' => $url ];
 		$e = [
 			'@type' => 'Event', '@id' => get_permalink( $id ) . '#event', 'name' => get_the_title( $id ), 'url' => get_permalink( $id ),

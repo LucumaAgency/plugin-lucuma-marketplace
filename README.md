@@ -71,7 +71,7 @@ el inventario de un dealer de Sandhills entra como CSV o feed oficial.
   filtro `?state=PA`). Meta: `lm_start`/`lm_end` (hora local ET, `YYYY-MM-DDTHH:MM`), `lm_type` (live, online, timed,
   live-online), `lm_auctioneer` (si el rematador no es dealer; si no, el autor), `lm_address`, `lm_city`, `lm_state`,
   `lm_zip`, `lm_url` (catálogo), `lm_featured` (pagado: Auction plan). Caja "Auction details" en el wp-admin.
-- Shortcodes: `[lm_auctions count="6"]` (y `main="1"` en el archivo), `[lm_auctions_featured count="3"]` (destacados
+- Shortcodes: `[lm_auctions count="6"]` (y `main="1"` en el archivo), `[lm_auctions_featured count="3" min="6"]` (destacados; solo con 6+ remates próximos,
   de las próximas 3 semanas, orden al azar en cada visita), `[lm_auction_facts]` (ficha; botón con `data-lm-event="auction_catalog"`).
 - SEO (en class-lm-seo.php): título con fecha y lugar, JSON-LD Event (modo presencial/online/mixto), noindex de
   remates terminados y del archivo filtrado.

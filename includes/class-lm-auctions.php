@@ -7,7 +7,8 @@
  *   /auctions/                 upcoming auctions by date (?state=PA filter)
  *   /auctions/<slug>/          one auction
  *   [lm_auctions count="6"]    upcoming auctions as cards; main="1" = the archive list
- *   [lm_auctions_featured count="3"]  featured upcoming auctions, shuffled on every visit
+ *   [lm_auctions_featured count="3" min="6"]  featured upcoming auctions, shuffled on every visit
+ *                              (min = only when at least that many auctions are upcoming)
  *   [lm_auction_facts]         single auction: date, type, place, auctioneer, catalog button
  *
  * Times are the auction's local time (site timezone, America/New_York), stored as "YYYY-MM-DDTHH:MM".
@@ -80,7 +81,14 @@ class LM_Auctions {
 		return (string) get_user_meta( $u, 'lm_company', true ) ?: get_the_author_meta( 'display_name', $u );
 	}
 
+	/** Online-only auction with no physical place given. */
+	public static function online_only( int $id ): bool {
+		return in_array( self::m( $id, 'lm_type' ), [ 'online', 'timed' ], true ) && self::m( $id, 'lm_city' ) === '';
+	}
+
+	/** "Littlestown, PA", or "Online" for an online auction without a city. */
 	public static function place( int $id ): string {
+		if ( self::online_only( $id ) ) return 'Online';
 		return implode( ', ', array_filter( [ self::m( $id, 'lm_city' ), self::m( $id, 'lm_state' ) ] ) );
 	}
 
@@ -155,7 +163,9 @@ class LM_Auctions {
 
 	/** Featured auctions in the next weeks, in a new random order on every visit (paid placement rotates). */
 	public static function auctions_featured( $atts ) {
-		$a = shortcode_atts( [ 'count' => 3 ], $atts );
+		$a = shortcode_atts( [ 'count' => 3, 'min' => 0 ], $atts );
+		// With few auctions the featured row would just repeat the list below: show it only past "min" upcoming.
+		if ( (int) $a['min'] && count( self::upcoming() ) < (int) $a['min'] ) return '';
 		$limit = wp_date( 'Y-m-d\TH:i', time() + self::FEATURED_DAYS * DAY_IN_SECONDS );
 		$ids = self::upcoming( [ 'meta_query' => [ 'relation' => 'AND',
 			[ 'key' => 'lm_start', 'value' => self::now(), 'compare' => '>=' ],
@@ -170,7 +180,7 @@ class LM_Auctions {
 	public static function auction_facts() {
 		$id = get_the_ID();
 		if ( get_post_type( $id ) !== self::PT ) return '';
-		$addr = implode( ', ', array_filter( [ self::m( $id, 'lm_address' ), self::place( $id ), self::m( $id, 'lm_zip' ) ] ) );
+		$addr = self::online_only( $id ) ? 'Online' : implode( ', ', array_filter( [ self::m( $id, 'lm_address' ), trim( self::place( $id ) . ' ' . self::m( $id, 'lm_zip' ) ) ] ) );
 		$rows = array_filter( [ 'When' => self::when( $id ), 'Type' => self::type_label( $id ), 'Where' => $addr, 'Auctioneer' => self::auctioneer( $id ) ] );
 		$out = '';
 		foreach ( $rows as $k => $v ) $out .= '<div><dt>' . esc_html( $k ) . '</dt><dd>' . esc_html( $v ) . '</dd></div>';
