@@ -52,6 +52,19 @@ El admin importa a nombre de un dealer. API: `GET /import/template`, `POST /impo
 o JSON `rows`, `dealer`), `POST /import/{job}/run {limit}`. No lee Sandhills directamente (Cloudflare):
 el inventario de un dealer de Sandhills entra como CSV o feed oficial.
 
+## SEO (0.8.0)
+`includes/class-lm-seo.php`, encima de SEOPress (sus ajustes generales siguen en SEOPress):
+- Títulos y descripciones desde los datos: ficha "2001 Case 1845C Skid Steer for Sale in Carbondale, PA | Heavy Listing"
+  (+ precio, horas y dealer en la descripción); categoría "Used Skid Steers for Sale" (raíces: "Construction Equipment",
+  "Farm Equipment"…); marca "Used Bobcat Equipment for Sale"; modelo "Used John Deere 1050K for Sale"; archivo
+  "Used Heavy Equipment for Sale From Dealers". Filtros `seopress_titles_title` / `seopress_titles_desc`.
+- `noindex, follow` (filtro `seopress_titles_robots`) y fuera del sitemap: listados con parámetros (`?q=`, `?eqcat=`…;
+  se ignoran `utm_*`, `gclid`, `fbclid`, `msclkid`), marcas y modelos con menos de 2 equipos, categorías vacías, `/dealer/`.
+- JSON-LD: Product + Offer (precio USD, disponibilidad según estado, vendedor con dirección) + BreadcrumbList en la
+  ficha; Organization + WebSite con SearchAction en la portada. Sin precio ("call for price") no se publica Offer.
+- URL de ficha `<título>-<id>` al guardar (única y estable); WordPress redirige el slug viejo. Los equipos existentes
+  la reciben al volver a guardarse (un POST REST vacío alcanza).
+
 ## Siguiente (outline, orden de trabajo)
 Importador CSV/Sandhills · tabla propia de búsqueda + buscador ·
 contactos y medición · páginas SEO de categoría/marca/modelo · widget para la web de Kurtz.
