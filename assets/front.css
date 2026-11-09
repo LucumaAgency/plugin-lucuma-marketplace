@@ -238,3 +238,11 @@
 .lmf-prose .cta-box p { font-weight: 400; color: var(--lmf-body); }
 .lmf-prose .tip-box p { margin: 0; }
 .lmf-prose .faq h3 { font-size: 19px; }
+/* embedded components inside an article keep their own look (no prose links, margins or heading sizes) */
+.lmf-prose .lmf-auctions a, .lmf-prose .lmf-grid a, .lmf-prose .lmf-fauction a { text-decoration: none; }
+.lmf-prose .lmf-auction h3, .lmf-prose .lmf-card h3, .lmf-prose .lmf-fauction h3 { margin: 0; font-size: 18px; line-height: 1.3; }
+.lmf-prose .lmf-auction-date, .lmf-prose .lmf-auction-date * { color: inherit; }
+.lmf-prose .lmf-auction-date strong { color: var(--lmf-text); }
+.lmf-prose .lmf-auction-body > *, .lmf-prose .lmf-card-body > * { margin-top: 0; }
+.lmf-prose .lmf-auctions > * + *, .lmf-prose .lmf-grid > * + * { margin-top: 0; }
+.lmf-prose .lmf-meta, .lmf-prose .lmf-kicker { margin: 0; line-height: 1.4; }
