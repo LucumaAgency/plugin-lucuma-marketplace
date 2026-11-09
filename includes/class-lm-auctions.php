@@ -109,6 +109,14 @@ class LM_Auctions {
 		return $txt . ' ET';
 	}
 
+	/** Card time: "9:00 AM ET", or "Closes Nov 17, 9:00 AM ET" for a timed auction that runs several days. */
+	private static function time_text( int $id ): string {
+		$s = self::dt( (string) self::m( $id, 'lm_start' ) );
+		$e = self::dt( (string) self::m( $id, 'lm_end' ) );
+		if ( $e && $s && $e->format( 'Y-m-d' ) !== $s->format( 'Y-m-d' ) ) return 'Closes ' . $e->format( 'M j, g:i A' ) . ' ET';
+		return $s ? $s->format( 'g:i A' ) . ' ET' : '';
+	}
+
 	/** Upcoming auction ids by date. */
 	private static function upcoming( array $extra = [] ): array {
 		return get_posts( array_merge( [
@@ -144,7 +152,7 @@ class LM_Auctions {
 			'<div class="lmf-auction-body">' .
 			'<span class="lmf-kicker">' . esc_html( self::type_label( $id ) ) . ( $feat ? ' · Featured' : '' ) . '</span>' .
 			'<h3><a href="' . esc_url( get_permalink( $id ) ) . '">' . esc_html( get_the_title( $id ) ) . '</a></h3>' .
-			'<p class="lmf-meta">' . esc_html( implode( ' · ', array_filter( [ self::auctioneer( $id ), self::place( $id ), $s ? $s->format( 'g:i A' ) . ' ET' : '' ] ) ) ) . '</p>' .
+			'<p class="lmf-meta">' . esc_html( implode( ' · ', array_filter( [ self::auctioneer( $id ), self::place( $id ), self::time_text( $id ) ] ) ) ) . '</p>' .
 			'</div></article>';
 	}
 
