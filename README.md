@@ -92,6 +92,13 @@ el inventario de un dealer de Sandhills entra como CSV o feed oficial.
   perfil, noindex de meses sin remates.
 - Bricks: plantilla "LHM · Dealer profile" (archiveType author) y página "Dealers" (`bricks/gen.py`: perfil_dealer, distribuidores).
 
+## Blog (0.11.0)
+`includes/class-lm-blog.php`: estilo editorial propio (no las tarjetas de equipos). `[lm_blog count="12"]` (en la página
+/blog/ el más nuevo va grande; `main="1"` en categorías), `[lm_blog_cats]`, `[lm_blog_title]`, `[lm_post_meta]`
+(categoría, fecha, minutos de lectura, autor "Heavy Listing Team"), `[lm_related_posts]`. Cuerpo con clase `lmf-prose`
+(tip-box, cta-box, tablas; acepta `[lm_grid]` y `[lm_auctions]` dentro). JSON-LD BlogPosting. Colores de categoría por slug:
+auctions, prices, buying-guides, selling.
+
 ## Siguiente (outline, orden de trabajo)
 Importador CSV/Sandhills · tabla propia de búsqueda + buscador ·
 contactos y medición · páginas SEO de categoría/marca/modelo · widget para la web de Kurtz.

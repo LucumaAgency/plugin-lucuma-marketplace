@@ -178,3 +178,59 @@
 .lmf-dprofile-h2 { margin-top: 32px; }
 @media (max-width: 991px) { .lmf-dprofile { grid-template-columns: 96px 1fr; } .lmf-dprofile-logo { width: 96px; height: 96px; } .lmf-dprofile-actions { grid-column: 1 / -1; grid-template-columns: 1fr 1fr; } }
 @media (max-width: 600px) { .lmf-dprofile { grid-template-columns: 1fr; padding: 18px; } .lmf-dprofile-logo { width: 80px; height: 80px; } .lmf-dprofile-actions { grid-template-columns: 1fr; } }
+
+/* ---------------------------------------------------------------- blog (editorial look, not the equipment cards) */
+.lmf-posts, .lmf-posts-lead, .lmf-post-head, .lmf-prose { font-family: var(--lm-font, inherit); color: var(--lmf-text); }
+.lmf-posts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 40px 28px; }
+.lmf-posts-lead { margin-bottom: 56px; padding-bottom: 48px; border-bottom: 1px solid var(--lmf-line); }
+.lmf-post { display: flex; flex-direction: column; gap: 16px; }
+.lmf-post-img { display: block; aspect-ratio: 1200 / 630; border-radius: 14px; overflow: hidden; background: var(--lmf-soft); }
+.lmf-post-img img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .35s ease; }
+.lmf-post:hover .lmf-post-img img { transform: scale(1.03); }
+.lmf-post-noimg { display: block; width: 100%; height: 100%; background: linear-gradient(135deg, var(--lmf-tint), #fff); }
+.lmf-post-body { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
+.lmf-post-title { margin: 0; font-size: 21px; line-height: 1.3; letter-spacing: -.01em; }
+.lmf-post-title a { color: var(--lmf-text); text-decoration: none; background: linear-gradient(currentColor, currentColor) 0 100% / 0 2px no-repeat; transition: background-size .25s; }
+.lmf-post:hover .lmf-post-title a { background-size: 100% 2px; }
+.lmf-post-excerpt { margin: 0; font-size: 15px; line-height: 1.6; color: var(--lmf-body); }
+.lmf-post-meta { margin: 0; font-size: 13px; color: var(--lmf-muted); display: inline-flex; flex-wrap: wrap; gap: 6px; }
+.lmf-post-dot { opacity: .6; }
+.lmf-post.is-lead { display: grid; grid-template-columns: 1.2fr 1fr; gap: 44px; align-items: center; }
+.lmf-post.is-lead .lmf-post-title { font-size: 34px; line-height: 1.18; letter-spacing: -.02em; }
+.lmf-post.is-lead .lmf-post-excerpt { font-size: 17px; }
+.lmf-pill { display: inline-block; padding: 4px 11px; border-radius: 99px; font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; text-decoration: none; background: var(--lmf-soft); color: var(--lmf-text); }
+.lmf-pill.c-auctions { background: #EAF0FC; color: #0D2F7B; }
+.lmf-pill.c-prices { background: #E4F5EA; color: #166534; }
+.lmf-pill.c-buying-guides { background: #FDF1D8; color: #8A5A00; }
+.lmf-pill.c-selling { background: #F0EBFD; color: #5B21B6; }
+.lmf-blog-cats { margin: 0 0 36px; }
+@media (max-width: 991px) { .lmf-posts { grid-template-columns: repeat(2, minmax(0, 1fr)); } .lmf-post.is-lead { grid-template-columns: 1fr; gap: 20px; } .lmf-post.is-lead .lmf-post-title { font-size: 28px; } }
+@media (max-width: 600px) { .lmf-posts { grid-template-columns: 1fr; gap: 32px; } .lmf-post.is-lead .lmf-post-title { font-size: 24px; } }
+
+/* article header and body */
+.lmf-post-head { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 0; }
+.lmf-prose { font-size: 18px; line-height: 1.75; color: var(--lmf-body); }
+.lmf-prose > * + * { margin-top: 1.1em; }
+.lmf-prose h2 { margin: 2.2em 0 .6em; font-size: 28px; line-height: 1.25; letter-spacing: -.01em; color: var(--lmf-text); }
+.lmf-prose h3 { margin: 1.8em 0 .4em; font-size: 21px; line-height: 1.3; color: var(--lmf-text); }
+.lmf-prose a { color: var(--lmf-accent-dk); text-decoration: underline; text-underline-offset: 3px; }
+.lmf-prose ul, .lmf-prose ol { padding-left: 1.3em; }
+.lmf-prose li + li { margin-top: .4em; }
+.lmf-prose strong { color: var(--lmf-text); }
+.lmf-prose img { max-width: 100%; height: auto; border-radius: 12px; }
+.lmf-prose figure { margin: 2em 0; }
+.lmf-prose figcaption { margin-top: 8px; font-size: 14px; color: var(--lmf-muted); }
+.lmf-prose table { width: 100%; border-collapse: collapse; font-size: 15px; line-height: 1.5; margin: 1.6em 0; display: block; overflow-x: auto; }
+.lmf-prose th, .lmf-prose td { padding: 10px 12px; border-bottom: 1px solid var(--lmf-line); text-align: left; vertical-align: top; }
+.lmf-prose th { background: var(--lmf-soft); color: var(--lmf-text); font-weight: 700; }
+.lmf-prose blockquote { margin: 1.8em 0; padding: 4px 0 4px 20px; border-left: 3px solid var(--lmf-accent); color: var(--lmf-text); font-size: 20px; }
+.lmf-prose .tip-box { display: block; margin: 1.8em 0; padding: 18px 22px; border-radius: 12px; background: var(--lmf-tint); border-left: 4px solid var(--lmf-accent); font-size: 16px; color: var(--lmf-text); }
+.lmf-prose .tip-box strong:first-child { display: block; margin-bottom: 4px; }
+.lmf-prose .cta-box { margin: 2.2em 0; padding: 24px; border-radius: 14px; border: 1px solid var(--lmf-line); background: linear-gradient(90deg, var(--lmf-tint), #fff 70%); }
+.lmf-prose .cta-box p { margin: 0 0 14px; color: var(--lmf-text); font-weight: 600; }
+.lmf-prose .cta-box a { display: inline-flex; align-items: center; height: 46px; padding: 0 22px; border-radius: var(--lmf-rb); background: var(--lmf-accent); color: #fff; font-weight: 700; font-size: 15px; text-decoration: none; }
+.lmf-prose .cta-box a:hover { background: var(--lmf-accent-dk); }
+.lmf-prose .lmf-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 1.6em 0; }
+.lmf-prose .lmf-grid *, .lmf-prose .lmf-auctions * { line-height: 1.4; }
+.lmf-prose .lmf-auctions { margin: 1.6em 0; }
+@media (max-width: 767px) { .lmf-prose { font-size: 17px; } .lmf-prose h2 { font-size: 24px; } }
