@@ -275,10 +275,17 @@ class LM_Auctions {
 		$a = shortcode_atts( [ 'count' => 3, 'min' => 0, 'title' => 'Featured auctions' ], $atts );
 		// With few auctions the featured row would just repeat the list below: show it only past "min" upcoming.
 		if ( (int) $a['min'] && count( self::upcoming() ) < (int) $a['min'] ) return '';
+		// Month page: that month's featured auctions; elsewhere, the next 3 weeks.
+		$month = self::month();
+		$from = self::now();
 		$limit = wp_date( 'Y-m-d\TH:i', time() + self::FEATURED_DAYS * DAY_IN_SECONDS );
+		if ( $month ) {
+			$from = max( $from, $month . '-01T00:00' );
+			$limit = ( new DateTimeImmutable( $month . '-01' ) )->modify( '+1 month' )->format( 'Y-m' ) . '-01T00:00';
+		}
 		$ids = self::upcoming( [ 'meta_query' => [ 'relation' => 'AND',
-			[ 'key' => 'lm_start', 'value' => self::now(), 'compare' => '>=' ],
-			[ 'key' => 'lm_start', 'value' => $limit, 'compare' => '<=' ],
+			[ 'key' => 'lm_start', 'value' => $from, 'compare' => '>=' ],
+			[ 'key' => 'lm_start', 'value' => $limit, 'compare' => '<' ],
 			[ 'key' => 'lm_featured', 'value' => '1' ] ] ] );
 		if ( ! $ids ) return '';
 		shuffle( $ids );
