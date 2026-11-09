@@ -7,8 +7,9 @@
  *   /auctions/                 upcoming auctions by date (?state=PA filter)
  *   /auctions/<slug>/          one auction
  *   [lm_auctions count="6"]    upcoming auctions as cards; main="1" = the archive list
- *   [lm_auctions_featured count="3" min="6"]  featured upcoming auctions, shuffled on every visit
- *                              (min = only when at least that many auctions are upcoming)
+ *   [lm_auctions_featured count="3" min="6" title="Featured auctions"]  featured upcoming auctions, full width,
+ *                              shuffled on every visit (min = only with that many upcoming; title="" = no heading).
+ *                              Lists placed after it on the same page skip the auctions it showed.
  *   [lm_auction_facts]         single auction: date, type, place, auctioneer, catalog button
  *
  * Times are the auction's local time (site timezone, America/New_York), stored as "YYYY-MM-DDTHH:MM".
@@ -31,6 +32,9 @@ class LM_Auctions {
 		'lm_featured'   => [ 'type' => 'boolean' ],
 	];
 	const FEATURED_DAYS = 21; // featured block: auctions in the next 3 weeks
+
+	/** Auctions already shown in a featured block on this page: the lists below skip them. */
+	private static array $shown = [];
 
 	public static function init() {
 		add_action( 'init', [ __CLASS__, 'register' ] );
@@ -156,22 +160,42 @@ class LM_Auctions {
 			'</div></article>';
 	}
 
+	/** Featured auction: full width, date in an accent block, short description and both buttons. */
+	private static function featured_card( int $id ): string {
+		$s = self::dt( (string) self::m( $id, 'lm_start' ) );
+		$url = (string) self::m( $id, 'lm_url' );
+		$link = get_permalink( $id );
+		$about = wp_trim_words( wp_strip_all_tags( (string) get_post_field( 'post_content', $id ) ), 28, '…' );
+		return '<article class="lmf-fauction">' .
+			'<a class="lmf-fauction-date" href="' . esc_url( $link ) . '">' . ( $s ? '<span>' . esc_html( $s->format( 'M' ) ) . '</span><strong>' . esc_html( $s->format( 'j' ) ) . '</strong><em>' . esc_html( $s->format( 'l' ) ) . '</em>' : '' ) . '</a>' .
+			'<div class="lmf-fauction-body">' .
+			'<span class="lmf-fauction-tag">Featured auction</span>' .
+			'<span class="lmf-kicker">' . esc_html( self::type_label( $id ) ) . '</span>' .
+			'<h3><a href="' . esc_url( $link ) . '">' . esc_html( get_the_title( $id ) ) . '</a></h3>' .
+			'<p class="lmf-meta">' . esc_html( implode( ' · ', array_filter( [ self::auctioneer( $id ), self::place( $id ), self::time_text( $id ) ] ) ) ) . '</p>' .
+			( $about ? '<p class="lmf-fauction-about">' . esc_html( $about ) . '</p>' : '' ) .
+			'</div><div class="lmf-fauction-actions">' .
+			( $url ? '<a class="lmf-btn" href="' . esc_url( $url ) . '" target="_blank" rel="noopener" data-lm-event="auction_catalog">View catalog &amp; bidding ↗</a>' : '' ) .
+			'<a class="lmf-btn ghost" href="' . esc_url( $link ) . '">Auction details</a>' .
+			'</div></article>';
+	}
+
 	public static function auctions( $atts ) {
 		$a = shortcode_atts( [ 'count' => 6, 'main' => '0' ], $atts );
 		if ( $a['main'] === '1' ) {
 			global $wp_query;
 			if ( ! $wp_query->have_posts() ) return '<div class="lmf-empty"><p><strong>No upcoming auctions listed yet.</strong></p><p>Running an equipment auction? <a href="mailto:contact@heavylisting.com">List it for free</a>.</p></div>';
-			$ids = wp_list_pluck( $wp_query->posts, 'ID' );
+			$ids = array_values( array_diff( wp_list_pluck( $wp_query->posts, 'ID' ), self::$shown ) );
 			$pages = paginate_links( [ 'total' => $wp_query->max_num_pages, 'current' => max( 1, get_query_var( 'paged' ) ), 'type' => 'list', 'prev_text' => '←', 'next_text' => '→' ] );
 			return '<div class="lmf-auctions">' . implode( '', array_map( [ __CLASS__, 'card' ], $ids ) ) . '</div>' . ( $pages ? '<nav class="lmf-pages">' . $pages . '</nav>' : '' );
 		}
-		$ids = array_slice( self::upcoming(), 0, max( 1, min( 24, (int) $a['count'] ) ) );
+		$ids = array_slice( array_values( array_diff( self::upcoming(), self::$shown ) ), 0, max( 1, min( 24, (int) $a['count'] ) ) );
 		return $ids ? '<div class="lmf-auctions">' . implode( '', array_map( [ __CLASS__, 'card' ], $ids ) ) . '</div>' : '';
 	}
 
 	/** Featured auctions in the next weeks, in a new random order on every visit (paid placement rotates). */
 	public static function auctions_featured( $atts ) {
-		$a = shortcode_atts( [ 'count' => 3, 'min' => 0 ], $atts );
+		$a = shortcode_atts( [ 'count' => 3, 'min' => 0, 'title' => 'Featured auctions' ], $atts );
 		// With few auctions the featured row would just repeat the list below: show it only past "min" upcoming.
 		if ( (int) $a['min'] && count( self::upcoming() ) < (int) $a['min'] ) return '';
 		$limit = wp_date( 'Y-m-d\TH:i', time() + self::FEATURED_DAYS * DAY_IN_SECONDS );
@@ -182,7 +206,9 @@ class LM_Auctions {
 		if ( ! $ids ) return '';
 		shuffle( $ids );
 		$ids = array_slice( $ids, 0, max( 1, min( 12, (int) $a['count'] ) ) );
-		return '<h2 class="lmf-h2">Featured auctions</h2><div class="lmf-auctions is-featured-row">' . implode( '', array_map( fn( $id ) => self::card( $id, true ), $ids ) ) . '</div>';
+		self::$shown = array_merge( self::$shown, $ids );
+		return ( $a['title'] !== '' ? '<h2 class="lmf-h2">' . esc_html( $a['title'] ) . '</h2>' : '' ) .
+			'<div class="lmf-auctions is-featured-row">' . implode( '', array_map( [ __CLASS__, 'featured_card' ], $ids ) ) . '</div>';
 	}
 
 	public static function auction_facts() {
