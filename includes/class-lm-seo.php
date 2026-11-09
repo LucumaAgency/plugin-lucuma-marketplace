@@ -328,7 +328,7 @@ class LM_Seo {
 		$end  = LM_Auctions::dt( (string) self::m( $id, 'lm_end' ) );
 		$type = (string) self::m( $id, 'lm_type' );
 		$url  = (string) self::m( $id, 'lm_url' );
-		$mode = [ 'live' => 'Offline', 'online' => 'Online', 'timed' => 'Online', 'live-online' => 'Mixed' ][ $type ] ?? 'Offline';
+		$mode = [ 'live' => 'Offline', 'online' => 'Online', 'timed' => 'Online', 'live-online' => 'Mixed', 'live-online-phone' => 'Mixed' ][ $type ] ?? 'Offline';
 		$address = array_filter( [ '@type' => 'PostalAddress', 'streetAddress' => self::m( $id, 'lm_address' ), 'addressLocality' => self::m( $id, 'lm_city' ),
 			'addressRegion' => self::m( $id, 'lm_state' ), 'postalCode' => self::m( $id, 'lm_zip' ), 'addressCountry' => 'US' ] );
 		$loc = [];

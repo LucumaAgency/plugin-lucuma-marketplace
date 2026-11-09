@@ -18,11 +18,12 @@ defined( 'ABSPATH' ) || exit;
 
 class LM_Auctions {
 	const PT    = 'lm_auction';
-	const TYPES = [ 'live' => 'Live auction', 'online' => 'Online auction', 'timed' => 'Timed online auction', 'live-online' => 'Live + online bidding' ];
+	const TYPES = [ 'live' => 'Live auction', 'online' => 'Online auction', 'timed' => 'Timed online auction', 'live-online' => 'Live + online bidding',
+		'live-online-phone' => 'Onsite, online & phone bidding' ];
 	const META  = [
 		'lm_start'      => [ 'type' => 'string' ],
 		'lm_end'        => [ 'type' => 'string' ],
-		'lm_type'       => [ 'type' => 'string', 'enum' => [ 'live', 'online', 'timed', 'live-online' ] ],
+		'lm_type'       => [ 'type' => 'string', 'enum' => [ 'live', 'online', 'timed', 'live-online', 'live-online-phone' ] ],
 		'lm_auctioneer' => [ 'type' => 'string' ], // name when the auctioneer has no dealer account (the author otherwise)
 		'lm_address'    => [ 'type' => 'string' ],
 		'lm_city'       => [ 'type' => 'string' ],
