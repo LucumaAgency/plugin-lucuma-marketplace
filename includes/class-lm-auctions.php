@@ -45,6 +45,7 @@ class LM_Auctions {
 		} );
 		add_action( 'save_post_' . self::PT, [ __CLASS__, 'save_box' ], 10, 2 );
 		foreach ( [ 'auctions', 'auctions_featured', 'auction_facts' ] as $s ) add_shortcode( 'lm_' . $s, [ __CLASS__, $s ] );
+		add_action( 'wp_footer', [ __CLASS__, 'datalayer' ], 5 ); // after the consent defaults in <head>
 	}
 
 	public static function register() {
@@ -152,13 +153,22 @@ class LM_Auctions {
 		$img = get_the_post_thumbnail( $id, 'medium_large', [ 'loading' => 'lazy', 'alt' => esc_attr( get_the_title( $id ) ) ] );
 		$feat = $badge && self::m( $id, 'lm_featured' );
 		return '<article class="lmf-auction' . ( $feat ? ' is-featured' : '' ) . '">' .
-			'<a class="lmf-auction-date" href="' . esc_url( get_permalink( $id ) ) . '">' . ( $s ? '<span>' . esc_html( $s->format( 'M' ) ) . '</span><strong>' . esc_html( $s->format( 'j' ) ) . '</strong><em>' . esc_html( $s->format( 'D' ) ) . '</em>' : '' ) . '</a>' .
-			( $img ? '<a class="lmf-auction-img" href="' . esc_url( get_permalink( $id ) ) . '">' . $img . '</a>' : '' ) .
+			'<a class="lmf-auction-date" href="' . esc_url( get_permalink( $id ) ) . '"' . self::track( $id, 'auction_open', 'list' ) . '>' . ( $s ? '<span>' . esc_html( $s->format( 'M' ) ) . '</span><strong>' . esc_html( $s->format( 'j' ) ) . '</strong><em>' . esc_html( $s->format( 'D' ) ) . '</em>' : '' ) . '</a>' .
+			( $img ? '<a class="lmf-auction-img" href="' . esc_url( get_permalink( $id ) ) . '"' . self::track( $id, 'auction_open', 'list' ) . '>' . $img . '</a>' : '' ) .
 			'<div class="lmf-auction-body">' .
 			'<span class="lmf-kicker">' . esc_html( self::type_label( $id ) ) . ( $feat ? ' · Featured' : '' ) . '</span>' .
-			'<h3><a href="' . esc_url( get_permalink( $id ) ) . '">' . esc_html( get_the_title( $id ) ) . '</a></h3>' .
+			'<h3><a href="' . esc_url( get_permalink( $id ) ) . '"' . self::track( $id, 'auction_open', 'list' ) . '>' . esc_html( get_the_title( $id ) ) . '</a></h3>' .
 			'<p class="lmf-meta">' . esc_html( implode( ' · ', array_filter( [ self::auctioneer( $id ), self::place( $id ), self::time_text( $id ) ] ) ) ) . '</p>' .
 			'</div></article>';
+	}
+
+	/** Data attributes read by GTM on auction links (see medicion/README: select_auction, click_auction_catalog). */
+	private static function track( int $id, string $event, string $placement ): string {
+		$s = self::dt( (string) self::m( $id, 'lm_start' ) );
+		return ' data-lm-event="' . esc_attr( $event ) . '" data-lm-placement="' . esc_attr( $placement ) . '"' .
+			' data-lm-auction-id="' . $id . '" data-lm-auction="' . esc_attr( get_the_title( $id ) ) . '"' .
+			' data-lm-auctioneer="' . esc_attr( self::auctioneer( $id ) ) . '" data-lm-auction-date="' . esc_attr( $s ? $s->format( 'Y-m-d' ) : '' ) . '"' .
+			' data-lm-auction-type="' . esc_attr( (string) self::m( $id, 'lm_type' ) ) . '" data-lm-featured="' . ( self::m( $id, 'lm_featured' ) ? 'yes' : 'no' ) . '"';
 	}
 
 	/** Featured auction: full width, date in an accent block, short description and both buttons. */
@@ -168,16 +178,16 @@ class LM_Auctions {
 		$link = get_permalink( $id );
 		$about = wp_trim_words( wp_strip_all_tags( (string) get_post_field( 'post_content', $id ) ), 28, '…' );
 		return '<article class="lmf-fauction">' .
-			'<a class="lmf-fauction-date" href="' . esc_url( $link ) . '">' . ( $s ? '<span>' . esc_html( $s->format( 'M' ) ) . '</span><strong>' . esc_html( $s->format( 'j' ) ) . '</strong><em>' . esc_html( $s->format( 'l' ) ) . '</em>' : '' ) . '</a>' .
+			'<a class="lmf-fauction-date" href="' . esc_url( $link ) . '"' . self::track( $id, 'auction_open', 'featured' ) . '>' . ( $s ? '<span>' . esc_html( $s->format( 'M' ) ) . '</span><strong>' . esc_html( $s->format( 'j' ) ) . '</strong><em>' . esc_html( $s->format( 'l' ) ) . '</em>' : '' ) . '</a>' .
 			'<div class="lmf-fauction-body">' .
 			'<span class="lmf-fauction-tag">Featured auction</span>' .
 			'<span class="lmf-kicker">' . esc_html( self::type_label( $id ) ) . '</span>' .
-			'<h3><a href="' . esc_url( $link ) . '">' . esc_html( get_the_title( $id ) ) . '</a></h3>' .
+			'<h3><a href="' . esc_url( $link ) . '"' . self::track( $id, 'auction_open', 'featured' ) . '>' . esc_html( get_the_title( $id ) ) . '</a></h3>' .
 			'<p class="lmf-meta">' . esc_html( implode( ' · ', array_filter( [ self::auctioneer( $id ), self::place( $id ), self::time_text( $id ) ] ) ) ) . '</p>' .
 			( $about ? '<p class="lmf-fauction-about">' . esc_html( $about ) . '</p>' : '' ) .
 			'</div><div class="lmf-fauction-actions">' .
-			( $url ? '<a class="lmf-btn" href="' . esc_url( $url ) . '" target="_blank" rel="noopener" data-lm-event="auction_catalog">View catalog &amp; bidding ↗</a>' : '' ) .
-			'<a class="lmf-btn ghost" href="' . esc_url( $link ) . '">Auction details</a>' .
+			( $url ? '<a class="lmf-btn" href="' . esc_url( $url ) . '" target="_blank" rel="noopener"' . self::track( $id, 'auction_catalog', 'featured' ) . '>View catalog &amp; bidding ↗</a>' : '' ) .
+			'<a class="lmf-btn ghost" href="' . esc_url( $link ) . '"' . self::track( $id, 'auction_open', 'featured' ) . '>Auction details</a>' .
 			'</div></article>';
 	}
 
@@ -222,7 +232,18 @@ class LM_Auctions {
 		$url = (string) self::m( $id, 'lm_url' );
 		return ( self::ended( $id ) ? '<p class="lmf-ended">This auction has ended. <a href="' . esc_url( get_post_type_archive_link( self::PT ) ) . '">See upcoming auctions</a></p>' : '' ) .
 			'<dl class="lmf-facts">' . $out . '</dl>' .
-			( $url ? '<a class="lmf-btn" href="' . esc_url( $url ) . '" target="_blank" rel="noopener" data-lm-event="auction_catalog">View catalog &amp; bidding ↗</a>' : '' );
+			( $url ? '<a class="lmf-btn" href="' . esc_url( $url ) . '" target="_blank" rel="noopener"' . self::track( $id, 'auction_catalog', 'auction_page' ) . '>View catalog &amp; bidding ↗</a>' : '' );
+	}
+
+	/** On an auction page, tell GTM which auction it is (event hl_auction_view → GA4 view_auction). */
+	public static function datalayer() {
+		if ( ! is_singular( self::PT ) ) return;
+		$id = get_queried_object_id();
+		$s = self::dt( (string) self::m( $id, 'lm_start' ) );
+		$d = [ 'event' => 'hl_auction_view', 'auction_id' => (string) $id, 'auction_name' => get_the_title( $id ), 'auctioneer' => self::auctioneer( $id ),
+			'auction_date' => $s ? $s->format( 'Y-m-d' ) : '', 'auction_type' => (string) self::m( $id, 'lm_type' ),
+			'featured' => self::m( $id, 'lm_featured' ) ? 'yes' : 'no', 'auction_state' => (string) self::m( $id, 'lm_state' ) ];
+		echo '<script>window.dataLayer=window.dataLayer||[];dataLayer.push(' . wp_json_encode( $d, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG ) . ');</script>' . "\n";
 	}
 
 	/* ------------------------------------------------------------------ admin box */

@@ -75,6 +75,10 @@ el inventario de un dealer de Sandhills entra como CSV o feed oficial.
   de las próximas 3 semanas, orden al azar en cada visita), `[lm_auction_facts]` (ficha; botón con `data-lm-event="auction_catalog"`).
 - SEO (en class-lm-seo.php): título con fecha y lugar, JSON-LD Event (modo presencial/online/mixto), noindex de
   remates terminados y del archivo filtrado.
+- Medición (0.9.5): enlaces de remates con `data-lm-event` (`auction_open` en tarjetas, `auction_catalog` en el botón del
+  catálogo) y `data-lm-placement` (featured, list, auction_page) + datos del remate; en la ficha, `dataLayer.push` del
+  evento `hl_auction_view` (en el footer, después del consentimiento). GTM los convierte en select_auction,
+  click_auction_catalog y view_auction.
 - Bricks: plantillas "LHM · Auctions archive" y "LHM · Auction single" (`bricks/gen.py`: subastas, subasta).
 
 ## Siguiente (outline, orden de trabajo)
