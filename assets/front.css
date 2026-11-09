@@ -234,3 +234,7 @@
 .lmf-prose .lmf-grid *, .lmf-prose .lmf-auctions * { line-height: 1.4; }
 .lmf-prose .lmf-auctions { margin: 1.6em 0; }
 @media (max-width: 767px) { .lmf-prose { font-size: 17px; } .lmf-prose h2 { font-size: 24px; } }
+.lmf-prose .cta-box h3 { margin: 0 0 8px; font-size: 21px; }
+.lmf-prose .cta-box p { font-weight: 400; color: var(--lmf-body); }
+.lmf-prose .tip-box p { margin: 0; }
+.lmf-prose .faq h3 { font-size: 19px; }
