@@ -148,6 +148,13 @@ class LM_Seo {
 			return 'Used ' . trim( self::make_of_model( $m ) . ' ' . self::name( $m ) ) . ' for Sale';
 		}
 		if ( is_post_type_archive( LM_Model::PT ) ) return 'Used Heavy Equipment for Sale From Dealers';
+		if ( is_singular( LM_Auctions::PT ) ) {
+			$id = get_queried_object_id();
+			$d = LM_Auctions::dt( (string) self::m( $id, 'lm_start' ) );
+			$place = LM_Auctions::place( $id );
+			return get_the_title( $id ) . ( $d ? ': ' . $d->format( 'M j, Y' ) : '' ) . ( $place ? ' in ' . $place : '' ) . ( LM_Auctions::ended( $id ) ? ' (Ended)' : '' );
+		}
+		if ( is_post_type_archive( LM_Auctions::PT ) ) return 'Heavy Equipment Auctions: Upcoming Dates and Locations';
 		return null;
 	}
 
@@ -198,6 +205,15 @@ class LM_Seo {
 			$n = (int) wp_count_posts( LM_Model::PT )->publish;
 			return "Browse $n used excavators, loaders, dozers, skid steers and more, listed directly by US equipment dealers. $close";
 		}
+		if ( is_singular( LM_Auctions::PT ) ) {
+			$id = get_queried_object_id();
+			$place = LM_Auctions::place( $id );
+			return LM_Auctions::type_label( $id ) . ' by ' . LM_Auctions::auctioneer( $id ) . ' on ' . LM_Auctions::when( $id ) . ( $place ? ' in ' . $place : '' ) .
+				'. See the details and the auction catalog.';
+		}
+		if ( is_post_type_archive( LM_Auctions::PT ) ) {
+			return 'Calendar of upcoming heavy equipment auctions from dealers and auctioneers: dates, locations, auction type and catalogs. List your auction for free.';
+		}
 		return null;
 	}
 
@@ -206,8 +222,9 @@ class LM_Seo {
 	/** Why a page should not be indexed, or '' when it should. */
 	private static function noindex_reason(): string {
 		if ( is_page( 'dealer' ) ) return 'dealer panel';
-		$ours = is_post_type_archive( LM_Model::PT ) || is_tax( [ LM_Model::CATEGORY, LM_Model::MAKE, LM_Model::MODEL ] );
+		$ours = is_post_type_archive( [ LM_Model::PT, LM_Auctions::PT ] ) || is_tax( [ LM_Model::CATEGORY, LM_Model::MAKE, LM_Model::MODEL ] );
 		if ( $ours && self::has_filters() ) return 'filtered';
+		if ( is_singular( LM_Auctions::PT ) && LM_Auctions::ended( get_queried_object_id() ) ) return 'ended auction';
 		if ( is_tax( [ LM_Model::CATEGORY, LM_Model::MAKE, LM_Model::MODEL ] ) ) {
 			$t = get_queried_object();
 			if ( ! self::term_indexable( $t ) ) return 'thin';
@@ -238,6 +255,8 @@ class LM_Seo {
 		if ( is_singular( LM_Model::PT ) ) {
 			$graph[] = self::product( get_queried_object_id() );
 			$graph[] = self::breadcrumbs( get_queried_object_id() );
+		} elseif ( is_singular( LM_Auctions::PT ) ) {
+			$graph[] = self::event( get_queried_object_id() );
 		} elseif ( is_front_page() ) {
 			$home = home_url( '/' );
 			$graph[] = [ '@type' => 'Organization', '@id' => $home . '#organization', 'name' => self::BRAND, 'url' => $home,
@@ -300,6 +319,32 @@ class LM_Seo {
 			];
 		}
 		return $p;
+	}
+
+	private static function event( int $id ): ?array {
+		$start = LM_Auctions::dt( (string) self::m( $id, 'lm_start' ) );
+		if ( ! $start ) return null;
+		$end  = LM_Auctions::dt( (string) self::m( $id, 'lm_end' ) );
+		$type = (string) self::m( $id, 'lm_type' );
+		$url  = (string) self::m( $id, 'lm_url' );
+		$mode = [ 'live' => 'Offline', 'online' => 'Online', 'timed' => 'Online', 'live-online' => 'Mixed' ][ $type ] ?? 'Offline';
+		$address = array_filter( [ '@type' => 'PostalAddress', 'streetAddress' => self::m( $id, 'lm_address' ), 'addressLocality' => self::m( $id, 'lm_city' ),
+			'addressRegion' => self::m( $id, 'lm_state' ), 'postalCode' => self::m( $id, 'lm_zip' ), 'addressCountry' => 'US' ] );
+		$loc = [];
+		if ( $mode !== 'Online' || count( $address ) > 2 ) $loc[] = [ '@type' => 'Place', 'name' => LM_Auctions::auctioneer( $id ), 'address' => $address ];
+		if ( $mode !== 'Offline' && $url ) $loc[] = [ '@type' => 'VirtualLocation', 'url' => $url ];
+		$e = [
+			'@type' => 'Event', '@id' => get_permalink( $id ) . '#event', 'name' => get_the_title( $id ), 'url' => get_permalink( $id ),
+			'startDate' => $start->format( 'c' ),
+			'eventStatus' => 'https://schema.org/EventScheduled',
+			'eventAttendanceMode' => 'https://schema.org/' . $mode . 'EventAttendanceMode',
+			'location' => count( $loc ) === 1 ? $loc[0] : $loc,
+			'organizer' => array_filter( [ '@type' => 'Organization', 'name' => LM_Auctions::auctioneer( $id ), 'url' => $url ] ),
+			'description' => self::sentence_trim( wp_strip_all_tags( (string) get_post_field( 'post_content', $id ) ), 500 ) ?: LM_Auctions::type_label( $id ) . ' by ' . LM_Auctions::auctioneer( $id ),
+		];
+		if ( $end ) $e['endDate'] = $end->format( 'c' );
+		if ( has_post_thumbnail( $id ) ) $e['image'] = [ wp_get_attachment_image_url( get_post_thumbnail_id( $id ), 'large' ) ];
+		return $e;
 	}
 
 	private static function breadcrumbs( int $id ): array {

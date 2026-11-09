@@ -65,6 +65,18 @@ el inventario de un dealer de Sandhills entra como CSV o feed oficial.
 - URL de ficha `<título>-<id>` al guardar (única y estable); WordPress redirige el slug viejo. Los equipos existentes
   la reciben al volver a guardarse (un POST REST vacío alcanza).
 
+## Remates (0.9.0)
+`includes/class-lm-auctions.php`: calendario de remates (fase A, sin pujas: cada remate enlaza a su catálogo).
+- Tipo `lm_auction` (REST `/wp/v2/auctions`, URL `/auctions/<slug>/`, archivo `/auctions/` solo próximos, por fecha;
+  filtro `?state=PA`). Meta: `lm_start`/`lm_end` (hora local ET, `YYYY-MM-DDTHH:MM`), `lm_type` (live, online, timed,
+  live-online), `lm_auctioneer` (si el rematador no es dealer; si no, el autor), `lm_address`, `lm_city`, `lm_state`,
+  `lm_zip`, `lm_url` (catálogo), `lm_featured` (pagado: Auction plan). Caja "Auction details" en el wp-admin.
+- Shortcodes: `[lm_auctions count="6"]` (y `main="1"` en el archivo), `[lm_auctions_featured count="3"]` (destacados
+  de las próximas 3 semanas, orden al azar en cada visita), `[lm_auction_facts]` (ficha; botón con `data-lm-event="auction_catalog"`).
+- SEO (en class-lm-seo.php): título con fecha y lugar, JSON-LD Event (modo presencial/online/mixto), noindex de
+  remates terminados y del archivo filtrado.
+- Bricks: plantillas "LHM · Auctions archive" y "LHM · Auction single" (`bricks/gen.py`: subastas, subasta).
+
 ## Siguiente (outline, orden de trabajo)
 Importador CSV/Sandhills · tabla propia de búsqueda + buscador ·
 contactos y medición · páginas SEO de categoría/marca/modelo · widget para la web de Kurtz.
