@@ -332,7 +332,7 @@ class LM_Panel_Api {
 			'id'      => $user->ID,
 			'login'   => $user->user_login,
 			'created' => $new,
-			'link'    => network_site_url( 'wp-login.php?action=rp&key=' . rawurlencode( $key ) . '&login=' . rawurlencode( $user->user_login ), 'login' ),
+			'link'    => LM_Panel::reset_url( $user, $key ),
 			'panel'   => LM_Panel::url(),
 		];
 	}

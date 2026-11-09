@@ -2,6 +2,8 @@
 /**
  * Dealer panel page: the [lm_dealer_panel] shortcode on /dealer/ (created on upgrade), its assets,
  * and keeping dealers out of wp-admin (they land on the panel after login).
+ * Logged out, /dealer/ is the login page itself: log in, forgot password and set a new password
+ * all happen there (?action=lost, ?action=rp), so dealers never see wp-login.php.
  */
 defined( 'ABSPATH' ) || exit;
 
@@ -16,6 +18,123 @@ class LM_Panel {
 		add_filter( 'login_redirect', [ __CLASS__, 'login_redirect' ], 10, 3 );
 		add_filter( 'ajax_query_attachments_args', [ __CLASS__, 'own_media' ] );
 		add_filter( 'rest_attachment_query', [ __CLASS__, 'own_media' ] );
+		add_action( 'template_redirect', [ __CLASS__, 'handle_auth' ] );
+		add_filter( 'lostpassword_url', [ __CLASS__, 'lost_url' ] );
+		add_filter( 'retrieve_password_message', [ __CLASS__, 'reset_message_link' ] );
+	}
+
+	/** Message for the auth forms, set while handling the POST and printed by the shortcode. */
+	private static $note = null;
+
+	public static function on_panel(): bool {
+		$id = (int) get_option( self::OPTION );
+		return $id ? is_page( $id ) : is_page( self::SLUG );
+	}
+
+	/** Link to set a new password, on the panel instead of wp-login.php. */
+	public static function reset_url( WP_User $user, string $key ): string {
+		return add_query_arg( [ 'action' => 'rp', 'key' => rawurlencode( $key ), 'login' => rawurlencode( $user->user_login ) ], self::url() );
+	}
+
+	public static function lost_url() {
+		return add_query_arg( 'action', 'lost', self::url() );
+	}
+
+	/** The reset email WordPress sends points to wp-login.php: send people to the panel instead. */
+	public static function reset_message_link( $message ) {
+		return preg_replace_callback( '#\S*wp-login\.php\?action=rp&key=([^&\s]+)&login=([^&\s]+)\S*#', function ( $m ) {
+			return add_query_arg( [ 'action' => 'rp', 'key' => $m[1], 'login' => $m[2] ], self::url() );
+		}, $message );
+	}
+
+	/** Handles the login, lost password and new password forms posted to /dealer/ (before any output, so cookies can be set). */
+	public static function handle_auth() {
+		if ( ! self::on_panel() ) return;
+		nocache_headers();
+		if ( is_user_logged_in() || ( $_SERVER['REQUEST_METHOD'] ?? '' ) !== 'POST' || empty( $_POST['lmp_auth'] ) ) return;
+		$form = sanitize_key( wp_unslash( $_POST['lmp_auth'] ) );
+
+		if ( $form === 'login' ) {
+			$login = trim( (string) wp_unslash( $_POST['log'] ?? '' ) );
+			$user  = wp_signon( [
+				'user_login'    => $login,
+				'user_password' => (string) wp_unslash( $_POST['pwd'] ?? '' ),
+				'remember'      => ! empty( $_POST['rememberme'] ),
+			], is_ssl() );
+			if ( is_wp_error( $user ) ) {
+				self::$note = [ 'bad', $login === '' ? 'Enter your email and password.' : 'The email or password is not correct.' ];
+				return;
+			}
+			wp_safe_redirect( self::url() );
+			exit;
+		}
+
+		if ( $form === 'lost' ) {
+			$login = trim( (string) wp_unslash( $_POST['user_login'] ?? '' ) );
+			if ( $login !== '' ) retrieve_password( $login ); // Same answer either way: does not reveal which emails have accounts.
+			self::$note = [ 'ok', 'If that email has a dealer account, we sent a link to set a new password. Check your inbox (and spam).' ];
+			return;
+		}
+
+		if ( $form === 'rp' ) {
+			$user = check_password_reset_key( (string) wp_unslash( $_POST['key'] ?? '' ), (string) wp_unslash( $_POST['login'] ?? '' ) );
+			if ( is_wp_error( $user ) ) {
+				self::$note = [ 'bad', 'This link has expired or was already used. Request a new one below.' ];
+				$_GET['action'] = 'lost';
+				return;
+			}
+			$p1 = (string) wp_unslash( $_POST['pass1'] ?? '' );
+			$p2 = (string) wp_unslash( $_POST['pass2'] ?? '' );
+			if ( strlen( $p1 ) < 8 || $p1 !== $p2 ) {
+				self::$note = [ 'bad', strlen( $p1 ) < 8 ? 'Use at least 8 characters.' : 'The two passwords do not match.' ];
+				return;
+			}
+			reset_password( $user, $p1 );
+			self::$note = [ 'ok', 'Your password is set. Log in below.' ];
+			$_GET['action'] = '';
+		}
+	}
+
+	/** Login, lost password or new password form, shown on /dealer/ to logged-out visitors. */
+	private static function auth_view(): string {
+		wp_enqueue_style( 'lm-panel', plugins_url( 'assets/', LM_DIR . '/lucuma-marketplace.php' ) . 'panel.css', [], LM_VERSION );
+		$action = sanitize_key( $_GET['action'] ?? '' );
+		$url    = esc_url( self::url() );
+		$note   = self::$note ? '<p class="lmp-msg ' . esc_attr( self::$note[0] ) . '" role="alert">' . esc_html( self::$note[1] ) . '</p>' : '';
+		$help   = '<p class="lmp-auth-foot">Not a dealer on Heavy Listing yet? <a href="' . esc_url( home_url( '/how-it-works/#dealers' ) ) . '">Request a dealer account</a></p>';
+
+		if ( $action === 'rp' ) {
+			$key   = (string) wp_unslash( $_REQUEST['key'] ?? '' );
+			$login = (string) wp_unslash( $_REQUEST['login'] ?? '' );
+			if ( is_wp_error( check_password_reset_key( $key, $login ) ) ) {
+				$note   = '<p class="lmp-msg bad" role="alert">This link has expired or was already used. Request a new one below.</p>';
+				$action = 'lost';
+			} else {
+				return '<div class="lmp-login lmp-auth"><h2>Set your password</h2><p class="lmp-muted">Choose a password for your dealer account.</p>' . $note .
+					'<form method="post" action="' . esc_url( add_query_arg( [ 'action' => 'rp', 'key' => rawurlencode( $key ), 'login' => rawurlencode( $login ) ], self::url() ) ) . '">' .
+					'<input type="hidden" name="lmp_auth" value="rp"><input type="hidden" name="key" value="' . esc_attr( $key ) . '"><input type="hidden" name="login" value="' . esc_attr( $login ) . '">' .
+					'<label class="lmp-field"><span>New password</span><input type="password" name="pass1" minlength="8" autocomplete="new-password" required><small>At least 8 characters.</small></label>' .
+					'<label class="lmp-field"><span>Repeat the password</span><input type="password" name="pass2" minlength="8" autocomplete="new-password" required></label>' .
+					'<button class="lmp-btn" type="submit">Save password</button></form></div>';
+			}
+		}
+
+		if ( $action === 'lost' ) {
+			$sent = self::$note && self::$note[0] === 'ok';
+			return '<div class="lmp-login lmp-auth"><h2>Forgot your password?</h2><p class="lmp-muted">Enter the email of your dealer account and we will send you a link to set a new one.</p>' . $note .
+				( $sent ? '' : '<form method="post" action="' . esc_url( self::lost_url() ) . '"><input type="hidden" name="lmp_auth" value="lost">' .
+					'<label class="lmp-field"><span>Email</span><input type="email" name="user_login" autocomplete="email" required></label>' .
+					'<button class="lmp-btn" type="submit">Send link</button></form>' ) .
+				'<p class="lmp-auth-foot"><a href="' . $url . '">Back to log in</a></p></div>';
+		}
+
+		$log = esc_attr( (string) wp_unslash( $_POST['log'] ?? '' ) );
+		return '<div class="lmp-login lmp-auth"><h2>Dealer log in</h2><p class="lmp-muted">Manage your equipment, photos and auctions on Heavy Listing.</p>' . $note .
+			'<form method="post" action="' . $url . '"><input type="hidden" name="lmp_auth" value="login">' .
+			'<label class="lmp-field"><span>Email or username</span><input type="text" name="log" value="' . $log . '" autocomplete="username" autocapitalize="off" required></label>' .
+			'<label class="lmp-field"><span>Password</span><input type="password" name="pwd" autocomplete="current-password" required></label>' .
+			'<div class="lmp-auth-row"><label class="lmp-check"><input type="checkbox" name="rememberme" value="1"> Keep me logged in</label><a href="' . esc_url( self::lost_url() ) . '">Forgot your password?</a></div>' .
+			'<button class="lmp-btn" type="submit">Log in</button></form>' . $help . '</div>';
 	}
 
 	public static function is_dealer( $user = null ): bool {
@@ -69,7 +188,7 @@ class LM_Panel {
 
 	public static function shortcode() {
 		if ( ! is_user_logged_in() ) {
-			return '<div class="lmp-login"><h2>Dealer dashboard</h2><p>Log in to manage your equipment.</p><p><a class="lmp-btn" href="' . esc_url( wp_login_url( self::url() ) ) . '">Log in</a></p></div>';
+			return self::auth_view();
 		}
 		if ( ! current_user_can( 'edit_lm_equipments' ) ) {
 			return '<div class="lmp-login"><h2>Dealer dashboard</h2><p>This account is not a dealer account. Contact us to list your equipment.</p></div>';

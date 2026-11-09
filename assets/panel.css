@@ -67,6 +67,22 @@
 .lmp-logo img { max-height: 80px; max-width: 240px; vertical-align: middle; margin-right: 10px; }
 .lmp-login { text-align: center; }
 .lmp-login .lmp-btn { margin-top: 8px; }
+/* Login, forgot password and new password on /dealer/ */
+.lmp-auth { max-width: 420px; margin: 48px auto 64px; padding: 32px 28px; border: 1px solid var(--lmp-line); border-radius: 12px; background: var(--lmp-card); text-align: left; }
+.lmp-auth *, .lmp-auth *::before, .lmp-auth *::after { box-sizing: border-box; }
+.lmp-auth h2 { margin: 0 0 4px; font-size: 26px; line-height: 1.2; }
+.lmp-auth > .lmp-muted { margin: 0 0 20px; font-size: 14px; }
+.lmp-auth form { display: grid; gap: 14px; }
+.lmp-auth input[type=text], .lmp-auth input[type=email], .lmp-auth input[type=password] {
+  width: 100%; padding: 11px 12px; border: 1px solid var(--lmp-line); border-radius: var(--lmp-r); background: #fff; font: inherit; color: inherit;
+}
+.lmp-auth input:focus { outline: 2px solid var(--lm-accent-tint, #E5E7EB); border-color: var(--lmp-accent); }
+.lmp-auth .lmp-btn { width: 100%; justify-content: center; padding: 12px 16px; margin-top: 4px; font-size: 15px; }
+.lmp-auth-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; font-size: 14px; }
+.lmp-check { display: inline-flex; gap: 8px; align-items: center; cursor: pointer; }
+.lmp-auth a { color: var(--lmp-accent-dk); }
+.lmp-auth-foot { margin: 20px 0 0; padding-top: 16px; border-top: 1px solid var(--lmp-line); font-size: 14px; color: var(--lmp-muted); text-align: center; }
+@media (max-width: 480px) { .lmp-auth { margin: 24px auto 40px; padding: 24px 18px; border: 0; } }
 
 @media (max-width: 760px) {
   .lmp-grid { grid-template-columns: 1fr 1fr; }
