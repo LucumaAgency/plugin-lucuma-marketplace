@@ -1,8 +1,8 @@
 <?php
 /**
  * Auction calendar (phase A of the auctions business): dealers' and auctioneers' upcoming auctions.
- * No bidding here: each auction links to its own catalog. Paid placement = "featured" (lm_featured),
- * and featured auctions with close dates rotate on every visit so nobody hides anybody.
+ * No bidding here: each auction links to its own catalog. Paid placement = "featured" (lm_featured): first inside its
+ * week in the calendar (max. 3 per week, enforced on save), and featured auctions with close dates rotate on every visit.
  *
  *   /auctions/                 upcoming auctions by date (?state=PA filter)
  *   /auctions/<slug>/          one auction
@@ -36,6 +36,7 @@ class LM_Auctions {
 		'lm_featured'   => [ 'type' => 'boolean' ],
 	];
 	const FEATURED_DAYS = 21; // featured block: auctions in the next 3 weeks
+	const MAX_FEATURED_PER_WEEK = 3; // paid spots per calendar week (Mon–Sun): keeps featured worth paying for
 
 	/** Auctions already shown in a featured block on this page: the lists below skip them. */
 	private static array $shown = [];
@@ -47,6 +48,7 @@ class LM_Auctions {
 			add_meta_box( 'lm_auction', 'Auction details', [ __CLASS__, 'box' ], self::PT, 'normal', 'high' );
 		} );
 		add_action( 'save_post_' . self::PT, [ __CLASS__, 'save_box' ], 10, 2 );
+		add_action( 'admin_notices', [ __CLASS__, 'featured_full_notice' ] );
 		foreach ( [ 'auctions', 'auctions_featured', 'auction_facts', 'auctions_title', 'auction_months' ] as $s ) add_shortcode( 'lm_' . $s, [ __CLASS__, $s ] );
 		add_filter( 'query_vars', fn( $v ) => array_merge( $v, [ 'lm_month' ] ) );
 		add_action( 'init', function () {
@@ -150,6 +152,36 @@ class LM_Auctions {
 			'meta_key' => 'lm_start', 'orderby' => 'meta_value', 'order' => 'ASC',
 			'meta_query' => [ [ 'key' => 'lm_start', 'value' => self::now(), 'compare' => '>=' ] ],
 		], $extra ) );
+	}
+
+	/** ISO week of the auction start ("2026-W50"): featured auctions go first inside their own week. */
+	private static function week( int $id ): string {
+		$d = self::dt( (string) self::m( $id, 'lm_start' ) );
+		return $d ? $d->format( 'o-\\WW' ) : '';
+	}
+
+	/** Keeps date order between weeks; inside each week, featured auctions first (each group still by date). */
+	public static function by_week( array $ids ): array {
+		$pos = array_flip( $ids );
+		usort( $ids, function ( $a, $b ) use ( $pos ) {
+			$wa = self::week( $a ); $wb = self::week( $b );
+			if ( $wa !== $wb ) return $pos[ $a ] <=> $pos[ $b ];
+			$fa = (bool) self::m( $a, 'lm_featured' ); $fb = (bool) self::m( $b, 'lm_featured' );
+			return $fa === $fb ? $pos[ $a ] <=> $pos[ $b ] : ( $fa ? -1 : 1 );
+		} );
+		return $ids;
+	}
+
+	/** Other featured auctions in the same week as $id. */
+	public static function featured_in_week( int $id, string $start ): array {
+		$d = self::dt( $start );
+		if ( ! $d ) return [];
+		$mon = $d->modify( 'monday this week' )->format( 'Y-m-d' ) . 'T00:00';
+		$next = $d->modify( 'monday next week' )->format( 'Y-m-d' ) . 'T00:00';
+		return get_posts( [ 'post_type' => self::PT, 'post_status' => 'publish', 'fields' => 'ids', 'posts_per_page' => 20, 'no_found_rows' => true,
+			'post__not_in' => [ $id ], 'meta_query' => [ 'relation' => 'AND',
+				[ 'key' => 'lm_start', 'value' => [ $mon, $next ], 'compare' => 'BETWEEN' ],
+				[ 'key' => 'lm_featured', 'value' => '1' ] ] ] );
 	}
 
 	/* ------------------------------------------------------------------ archive */
@@ -262,11 +294,11 @@ class LM_Auctions {
 			global $wp_query;
 			if ( ! $wp_query->have_posts() && self::month() ) return '<div class="lmf-empty"><p><strong>No auctions listed for ' . esc_html( self::month_label( self::month() ) ) . ' yet.</strong></p><p><a href="' . esc_url( get_post_type_archive_link( self::PT ) ) . '">See all upcoming auctions</a></p></div>';
 			if ( ! $wp_query->have_posts() ) return '<div class="lmf-empty"><p><strong>No upcoming auctions listed yet.</strong></p><p>Running an equipment auction? <a href="mailto:contact@heavylisting.com">List it for free</a>.</p></div>';
-			$ids = array_values( array_diff( wp_list_pluck( $wp_query->posts, 'ID' ), self::$shown ) );
+			$ids = self::by_week( array_values( array_diff( wp_list_pluck( $wp_query->posts, 'ID' ), self::$shown ) ) );
 			$pages = paginate_links( [ 'total' => $wp_query->max_num_pages, 'current' => max( 1, get_query_var( 'paged' ) ), 'type' => 'list', 'prev_text' => '←', 'next_text' => '→' ] );
 			return '<div class="lmf-auctions">' . implode( '', array_map( [ __CLASS__, 'card' ], $ids ) ) . '</div>' . ( $pages ? '<nav class="lmf-pages">' . $pages . '</nav>' : '' );
 		}
-		$ids = array_slice( array_values( array_diff( self::upcoming(), self::$shown ) ), 0, max( 1, min( 24, (int) $a['count'] ) ) );
+		$ids = self::by_week( array_slice( array_values( array_diff( self::upcoming(), self::$shown ) ), 0, max( 1, min( 24, (int) $a['count'] ) ) ) );
 		return $ids ? '<div class="lmf-auctions">' . implode( '', array_map( [ __CLASS__, 'card' ], $ids ) ) . '</div>' : '';
 	}
 
@@ -333,7 +365,7 @@ class LM_Auctions {
 			$f( 'lm_auctioneer', 'Auctioneer name (leave empty to use the author dealer)' ) .
 			$f( 'lm_address', 'Street address' ) . $f( 'lm_city', 'City' ) . $f( 'lm_state', 'State (2 letters)', 'text', 'maxlength="2"' ) . $f( 'lm_zip', 'ZIP' ) .
 			$f( 'lm_url', 'Catalog / bidding URL', 'url' ) .
-			'<p><label><input type="checkbox" name="lm_featured" value="1"' . checked( (bool) get_post_meta( $post->ID, 'lm_featured', true ), true, false ) . '> <strong>Featured</strong> (paid: Auction plan)</label></p>';
+			'<p><label><input type="checkbox" name="lm_featured" value="1"' . checked( (bool) get_post_meta( $post->ID, 'lm_featured', true ), true, false ) . '> <strong>Featured</strong> (paid: Auction plan, max. ' . (int) self::MAX_FEATURED_PER_WEEK . ' per week)</label></p>';
 	}
 
 	public static function save_box( int $id, WP_Post $post ) {
@@ -343,6 +375,19 @@ class LM_Auctions {
 		}
 		update_post_meta( $id, 'lm_state', strtoupper( substr( sanitize_text_field( wp_unslash( $_POST['lm_state'] ?? '' ) ), 0, 2 ) ) );
 		update_post_meta( $id, 'lm_url', esc_url_raw( wp_unslash( $_POST['lm_url'] ?? '' ) ) );
-		update_post_meta( $id, 'lm_featured', empty( $_POST['lm_featured'] ) ? false : true );
+		$feat = ! empty( $_POST['lm_featured'] );
+		if ( $feat && count( self::featured_in_week( $id, (string) get_post_meta( $id, 'lm_start', true ) ) ) >= self::MAX_FEATURED_PER_WEEK ) {
+			$feat = false; // week is full: saved as not featured, with a notice
+			set_transient( 'lm_featured_full_' . get_current_user_id(), get_the_title( $id ), 60 );
+		}
+		update_post_meta( $id, 'lm_featured', $feat );
+	}
+
+	public static function featured_full_notice() {
+		$t = get_transient( 'lm_featured_full_' . get_current_user_id() );
+		if ( ! $t ) return;
+		delete_transient( 'lm_featured_full_' . get_current_user_id() );
+		echo '<div class="notice notice-error"><p><strong>' . esc_html( $t ) . '</strong> was saved as not featured: that week already has ' .
+			(int) self::MAX_FEATURED_PER_WEEK . ' featured auctions.</p></div>';
 	}
 }
