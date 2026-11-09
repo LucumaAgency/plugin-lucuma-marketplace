@@ -26,6 +26,15 @@ class LM_Dealers {
 		add_action( 'pre_get_posts', [ __CLASS__, 'profile_query' ] );
 		add_action( 'template_redirect', [ __CLASS__, 'only_dealers' ] );
 		foreach ( [ 'dealers', 'dealer_profile' ] as $s ) add_shortcode( 'lm_' . $s, [ __CLASS__, $s ] );
+		add_action( 'init', [ __CLASS__, 'register_meta' ] );
+	}
+
+	/** Public business profile fields in REST (/wp/v2/users), editable by admins (set up dealers for them). */
+	public static function register_meta() {
+		foreach ( [ 'lm_company', 'lm_phone', 'lm_website', 'lm_address', 'lm_city', 'lm_state', 'lm_zip' ] as $k ) {
+			register_meta( 'user', $k, [ 'type' => 'string', 'single' => true, 'show_in_rest' => true,
+				'auth_callback' => fn() => current_user_can( 'edit_users' ) ] );
+		}
 	}
 
 	/* ------------------------------------------------------------------ helpers */
