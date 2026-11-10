@@ -2,6 +2,7 @@
  *   #/            listings      #/new          add equipment
  *   #/edit/ID     edit          #/profile      company card
  *   #/import      CSV import (preview, then batches with progress)
+ *   #/results     views and contact clicks (admins: all dealers, #/results/ID one dealer)
  */
 (function () {
   'use strict';
@@ -72,7 +73,7 @@
     if (text && !bad) setTimeout(function () { if (m.textContent === text) { m.textContent = ''; m.className = 'lmp-msg'; } }, 4000);
   }
   function nav() {
-    return '<a class="lmp-btn ghost" href="#/import">Import</a><a class="lmp-btn ghost" href="#/profile">Company profile</a><a class="lmp-btn ghost" href="' + esc(LMP.logout) + '">Log out</a>';
+    return '<a class="lmp-btn ghost" href="#/results">Results</a><a class="lmp-btn ghost" href="#/import">Import</a><a class="lmp-btn ghost" href="#/profile">Company profile</a><a class="lmp-btn ghost" href="' + esc(LMP.logout) + '">Log out</a>';
   }
 
   /* ---------------------------------------------------------------- list */
@@ -406,6 +407,41 @@
     }
   }
 
+  /* ---------------------------------------------------------------- results */
+  var KLAB = { view: 'Views', call: 'Call clicks', email: 'Email clicks', website: 'Website clicks', catalog: 'Catalog clicks' };
+  function num(n) { return Number(n || 0).toLocaleString('en-US'); }
+  function viewResults(dealer) {
+    var days = +(sessionStorage.getItem('lmpDays') || 30);
+    var back = dealer ? '<a class="lmp-btn ghost" href="#/results">← All dealers</a>' : '<a class="lmp-btn ghost" href="#/">← Back to list</a>';
+    shell('Results', '<select class="lmp-days" aria-label="Period">' + [7, 30, 90].map(function (d) {
+      return '<option value="' + d + '"' + (d === days ? ' selected' : '') + '>Last ' + d + ' days</option>'; }).join('') + '</select>' + back,
+      '<div class="lmp-results"><p class="lmp-muted">Loading…</p></div>');
+    root.querySelector('.lmp-days').addEventListener('change', function (e) { sessionStorage.setItem('lmpDays', e.target.value); viewResults(dealer); });
+    var box = root.querySelector('.lmp-results');
+    var path = LMP.admin ? 'stats?days=' + days + (dealer ? '&dealer=' + dealer : '') : 'my/stats?days=' + days;
+    api(path).then(function (r) {
+      var note = '<p class="lmp-muted">Since ' + esc(r.since) + '. People who opened a listing count once a day; bots and your own visits are not counted.' +
+        (r.first_day ? ' Counting started on ' + esc(r.first_day) + '.' : '') + '</p>';
+      if (r.dealers) {
+        box.innerHTML = note + (r.dealers.length ? '<table class="lmp-table"><thead><tr><th>Dealer</th>' + Object.keys(KLAB).map(function (k) { return '<th>' + KLAB[k] + '</th>'; }).join('') + '</tr></thead><tbody>' +
+          r.dealers.map(function (d) { return '<tr><td><a href="#/results/' + d.id + '">' + esc(d.company) + '</a></td>' + Object.keys(KLAB).map(function (k) { return '<td>' + num(d[k]) + '</td>'; }).join('') + '</tr>'; }).join('') +
+          '</tbody></table>' : '<div class="lmp-empty"><p>No data yet.</p></div>');
+        return;
+      }
+      var t = r.totals, contacts = t.call + t.email + t.website + t.catalog;
+      box.innerHTML = note +
+        '<div class="lmp-kpis">' +
+        '<div><strong>' + num(t.view - r.profile_views) + '</strong><span>Listing and auction views</span></div>' +
+        '<div><strong>' + num(r.profile_views) + '</strong><span>Dealer page views</span></div>' +
+        '<div><strong>' + num(contacts) + '</strong><span>Contact clicks</span></div>' +
+        '<div><strong>' + num(t.call) + '</strong><span>Call clicks</span></div></div>' +
+        '<h3 class="lmp-h3">Most viewed</h3>' +
+        (r.top.length ? '<table class="lmp-table"><thead><tr><th>Listing</th><th>Views</th><th>Calls</th><th>Emails</th><th>Website / catalog</th></tr></thead><tbody>' +
+          r.top.map(function (i) { return '<tr><td><a href="' + esc(i.link) + '" target="_blank" rel="noopener">' + esc(i.title) + '</a>' + (i.type === 'auction' ? ' <span class="lmp-muted">(auction)</span>' : '') + '</td><td>' + num(i.view) + '</td><td>' + num(i.call) + '</td><td>' + num(i.email) + '</td><td>' + num(i.website + i.catalog) + '</td></tr>'; }).join('') +
+          '</tbody></table>' : '<div class="lmp-empty"><p>No views in this period yet.</p></div>');
+    }).catch(function (e) { box.innerHTML = ''; message(e.message, true); });
+  }
+
   /* ---------------------------------------------------------------- router */
   function route() {
     var h = location.hash.replace(/^#\/?/, '');
@@ -414,6 +450,8 @@
     if (h === 'new') return viewForm(null);
     if (h === 'profile') return viewProfile();
     if (h === 'import') return viewImport();
+    var r = h.match(/^results(?:\/(\d+))?$/);
+    if (r) return viewResults(r[1] ? +r[1] : null);
     return viewList();
   }
   window.addEventListener('hashchange', route);

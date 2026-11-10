@@ -106,6 +106,16 @@ auctions, prices, buying-guides, selling.
 - `[lm_count cities="..." category="..."]` devuelve el número de equipos, para textos como "98 machines near Harrisburg".
 - Las ciudades de cada región viven en el shortcode de la página (Bricks, `bricks/gen.py`), no en el plugin.
 
+## Resultados por dealer (0.15.0)
+
+- `LM_Stats` (tabla `{prefix}lm_stats`: día, ítem, dealer, tipo, conteo; sin datos personales). Tipos: `view`, `call`, `email`, `website`, `catalog`.
+- Conteo en el navegador con `sendBeacon` a `POST lucuma-mkt/v1/hit` (los bots sin JS no cuentan; filtro de user-agent de bots).
+  Vista: 1 por visitante, ítem y día (localStorage). No se imprime el script para dealers ni admins logueados.
+  Clics: reutiliza los `data-lm-event` de GTM (`call`, `email`, `dealer_website`/`source` → website, `auction_catalog` → catalog).
+- El dueño del ítem sale siempre del post (`post_author`), nunca del navegador. Remates creados por un admin quedan a nombre de ese admin.
+- Panel: `#/results` (KPIs + los 10 más vistos, 7/30/90 días). Admin: tabla de todos los dealers y `#/results/ID`.
+- REST: `GET my/stats?days=30` (dealer) y `GET stats?days=30[&dealer=ID]` (admin).
+
 ## Siguiente (outline, orden de trabajo)
 Importador CSV/Sandhills · tabla propia de búsqueda + buscador ·
 contactos y medición · páginas SEO de categoría/marca/modelo · widget para la web de Kurtz.

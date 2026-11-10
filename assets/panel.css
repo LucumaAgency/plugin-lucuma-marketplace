@@ -97,3 +97,12 @@
 .lmp-bar-prog { height: 8px; margin-top: 12px; border-radius: 99px; background: var(--lmp-bg); overflow: hidden; }
 .lmp-bar-prog i { display: block; height: 100%; width: 0; background: var(--lmp-accent); transition: width .3s; }
 .lmp input[type=file] { padding: 8px 0; }
+
+/* results (0.15.0) */
+.lmp-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 12px 0 22px; }
+.lmp-kpis div { background: var(--lmp-card); border: 1px solid var(--lmp-line); border-radius: var(--lmp-r); padding: 16px; }
+.lmp-kpis strong { display: block; font-size: 28px; line-height: 1.1; color: var(--lmp-text); }
+.lmp-kpis span { font-size: 13px; color: var(--lmp-muted); }
+.lmp-h3 { font-size: 16px; margin: 0 0 10px; }
+.lmp-days { padding: 8px 10px; border: 1px solid var(--lmp-line); border-radius: 8px; background: #fff; }
+@media (max-width: 767px) { .lmp-kpis { grid-template-columns: 1fr 1fr; } }
