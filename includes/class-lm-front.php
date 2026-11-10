@@ -9,13 +9,15 @@
  *                               ?q= ?eqcat= ?make= ?dealer= and pagination)
  *   [lm_filters]                archive sidebar: categories and makes
  *   [lm_archive_title]          heading for the current archive / filters
+ *   [lm_count cities="" category=""]  number of listings (regional pages)
+ *   [lm_grid cities="A, B"]     grid limited to those cities
  *   single listing: [lm_price] [lm_gallery] [lm_facts] [lm_specs] [lm_dealer] [lm_breadcrumbs]
  */
 defined( 'ABSPATH' ) || exit;
 
 class LM_Front {
 	public static function init() {
-		foreach ( [ 'search', 'categories', 'makes', 'grid', 'filters', 'archive_title', 'price', 'gallery', 'facts', 'specs', 'dealer', 'breadcrumbs' ] as $s ) {
+		foreach ( [ 'search', 'categories', 'makes', 'grid', 'count', 'filters', 'archive_title', 'price', 'gallery', 'facts', 'specs', 'dealer', 'breadcrumbs' ] as $s ) {
 			add_shortcode( 'lm_' . $s, [ __CLASS__, $s ] );
 		}
 		add_action( 'wp_enqueue_scripts', function () {
@@ -146,7 +148,7 @@ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded'
 	}
 
 	public static function grid( $atts ) {
-		$a = shortcode_atts( [ 'count' => 8, 'main' => '0', 'category' => '', 'make' => '' ], $atts );
+		$a = shortcode_atts( [ 'count' => 8, 'main' => '0', 'category' => '', 'make' => '', 'cities' => '' ], $atts );
 		if ( $a['main'] === '1' ) {
 			global $wp_query;
 			if ( ! $wp_query->have_posts() ) {
@@ -162,8 +164,24 @@ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded'
 		if ( $a['category'] ) $tax[] = [ 'taxonomy' => LM_Model::CATEGORY, 'field' => 'slug', 'terms' => sanitize_title( $a['category'] ) ];
 		if ( $a['make'] ) $tax[] = [ 'taxonomy' => LM_Model::MAKE, 'field' => 'slug', 'terms' => sanitize_title( $a['make'] ) ];
 		if ( $tax ) $args['tax_query'] = $tax;
+		if ( $c = self::cities_query( $a['cities'] ) ) $args['meta_query'] = [ $c ];
 		$ids = get_posts( $args );
 		return $ids ? '<div class="lmf-grid">' . implode( '', array_map( [ __CLASS__, 'card' ], $ids ) ) . '</div>' : '';
+	}
+
+	/** meta_query for a comma-separated list of cities (regional landing pages): "Littlestown, Hanover". */
+	public static function cities_query( string $cities ): array {
+		$list = array_values( array_filter( array_map( 'trim', explode( ',', $cities ) ) ) );
+		return $list ? [ 'key' => 'lm_city', 'value' => array_map( 'sanitize_text_field', $list ), 'compare' => 'IN' ] : [];
+	}
+
+	/** [lm_count cities="..." category="..."]: number of listings, for copy like "98 machines near Harrisburg". */
+	public static function count( $atts ) {
+		$a = shortcode_atts( [ 'cities' => '', 'category' => '' ], $atts );
+		$args = [ 'post_type' => LM_Model::PT, 'post_status' => 'publish', 'posts_per_page' => -1, 'fields' => 'ids', 'no_found_rows' => true ];
+		if ( $a['category'] ) $args['tax_query'] = [ [ 'taxonomy' => LM_Model::CATEGORY, 'field' => 'slug', 'terms' => sanitize_title( $a['category'] ) ] ];
+		if ( $c = self::cities_query( $a['cities'] ) ) $args['meta_query'] = [ $c ];
+		return (string) count( get_posts( $args ) );
 	}
 
 	public static function filters() {

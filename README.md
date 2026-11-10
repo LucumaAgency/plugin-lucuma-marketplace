@@ -99,6 +99,13 @@ el inventario de un dealer de Sandhills entra como CSV o feed oficial.
 (tip-box, cta-box, tablas; acepta `[lm_grid]` y `[lm_auctions]` dentro). JSON-LD BlogPosting. Colores de categoría por slug:
 auctions, prices, buying-guides, selling.
 
+## Landings regionales (0.14.0)
+
+- `[lm_grid cities="Littlestown, Hanover" count="12"]` y `[lm_auctions cities="..." count="6"]` filtran por el campo `lm_city`
+  (lista separada por comas, coincidencia exacta). Sin remates en la zona, `lm_auctions` muestra un aviso con enlace al calendario.
+- `[lm_count cities="..." category="..."]` devuelve el número de equipos, para textos como "98 machines near Harrisburg".
+- Las ciudades de cada región viven en el shortcode de la página (Bricks, `bricks/gen.py`), no en el plugin.
+
 ## Siguiente (outline, orden de trabajo)
 Importador CSV/Sandhills · tabla propia de búsqueda + buscador ·
 contactos y medición · páginas SEO de categoría/marca/modelo · widget para la web de Kurtz.

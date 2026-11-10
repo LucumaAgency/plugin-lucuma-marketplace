@@ -289,7 +289,7 @@ class LM_Auctions {
 	}
 
 	public static function auctions( $atts ) {
-		$a = shortcode_atts( [ 'count' => 6, 'main' => '0' ], $atts );
+		$a = shortcode_atts( [ 'count' => 6, 'main' => '0', 'cities' => '' ], $atts );
 		if ( $a['main'] === '1' ) {
 			global $wp_query;
 			if ( ! $wp_query->have_posts() && self::month() ) return '<div class="lmf-empty"><p><strong>No auctions listed for ' . esc_html( self::month_label( self::month() ) ) . ' yet.</strong></p><p><a href="' . esc_url( get_post_type_archive_link( self::PT ) ) . '">See all upcoming auctions</a></p></div>';
@@ -298,7 +298,10 @@ class LM_Auctions {
 			$pages = paginate_links( [ 'total' => $wp_query->max_num_pages, 'current' => max( 1, get_query_var( 'paged' ) ), 'type' => 'list', 'prev_text' => '←', 'next_text' => '→' ] );
 			return '<div class="lmf-auctions">' . implode( '', array_map( [ __CLASS__, 'card' ], $ids ) ) . '</div>' . ( $pages ? '<nav class="lmf-pages">' . $pages . '</nav>' : '' );
 		}
-		$ids = self::by_week( array_slice( array_values( array_diff( self::upcoming(), self::$shown ) ), 0, max( 1, min( 24, (int) $a['count'] ) ) ) );
+		$extra = [];
+		if ( $c = LM_Front::cities_query( $a['cities'] ) ) $extra['meta_query'] = [ 'relation' => 'AND', [ 'key' => 'lm_start', 'value' => self::now(), 'compare' => '>=' ], $c ];
+		$ids = self::by_week( array_slice( array_values( array_diff( self::upcoming( $extra ), self::$shown ) ), 0, max( 1, min( 24, (int) $a['count'] ) ) ) );
+		if ( ! $ids && $a['cities'] ) return '<div class="lmf-empty"><p>No auctions listed in this area right now. <a href="' . esc_url( get_post_type_archive_link( self::PT ) ) . '">See all upcoming auctions in Pennsylvania</a>.</p></div>';
 		return $ids ? '<div class="lmf-auctions">' . implode( '', array_map( [ __CLASS__, 'card' ], $ids ) ) . '</div>' : '';
 	}
 
