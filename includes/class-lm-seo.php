@@ -141,6 +141,7 @@ class LM_Seo {
 			if ( self::m( $id, 'lm_status' ) === 'sold' ) return $t . ' (Sold)';
 			return $t . ' for Sale' . ( $loc ? ' in ' . $loc : '' );
 		}
+		if ( $c = LM_Combo::current() ) return 'Used ' . self::name( $c['make'] ) . ' ' . self::cat_noun( $c['cat'] ) . ' for Sale';
 		if ( is_tax( LM_Model::CATEGORY ) ) return LM_Landing::seo( get_queried_object(), 'title' ) ?? 'Used ' . self::cat_noun( get_queried_object() ) . ' for Sale';
 		if ( is_tax( LM_Model::MAKE ) ) return 'Used ' . self::name( get_queried_object() ) . ' Equipment for Sale';
 		if ( is_tax( LM_Model::MODEL ) ) {
@@ -186,6 +187,13 @@ class LM_Seo {
 			$sold = self::m( $id, 'lm_status' ) === 'sold';
 			return $cond . ' ' . get_the_title( $id ) . ( $sold ? ', sold' : ' for sale' ) . ( $loc ? ' in ' . $loc : '' ) . ': ' . implode( ', ', $facts ) .
 				'. Sold by ' . self::dealer( $id ) . '. See photos and specs, and contact the dealer directly.';
+		}
+		if ( $c = LM_Combo::current() ) {
+			$s = LM_Landing::stats( $c['cat'], $c['make'] );
+			$n = (int) str_replace( ',', '', $s['{count}'] );
+			$noun = strtolower( self::cat_noun( $c['cat'] ) );
+			return "Browse $n used " . self::name( $c['make'] ) . ' ' . ( $n === 1 ? LM_Panel_Api::singular( $noun ) : $noun ) . ' for sale from dealers' .
+				( $n > 1 && $s['{median_price}'] !== 'call for price' ? ', median asking price ' . $s['{median_price}'] : '' ) . ". $close";
 		}
 		if ( is_tax( LM_Model::CATEGORY ) && ( $custom = LM_Landing::seo( get_queried_object(), 'desc' ) ) !== null ) return $custom;
 		if ( is_tax( [ LM_Model::CATEGORY, LM_Model::MAKE, LM_Model::MODEL ] ) ) {
@@ -256,6 +264,7 @@ class LM_Seo {
 			global $wp_query;
 			if ( ! $wp_query->found_posts ) return 'empty month';
 		}
+		if ( $c = LM_Combo::current() ) return LM_Combo::indexable( $c['cat'], $c['make'] ) ? '' : 'thin combo';
 		if ( is_tax( [ LM_Model::CATEGORY, LM_Model::MAKE, LM_Model::MODEL ] ) ) {
 			$t = get_queried_object();
 			if ( ! self::term_indexable( $t ) ) return 'thin';

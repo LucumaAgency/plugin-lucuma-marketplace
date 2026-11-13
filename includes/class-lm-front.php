@@ -197,6 +197,18 @@ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded'
 			$html .= '</ul></li>';
 		}
 		$html .= '</ul><h4>Make</h4><ul class="lmf-list">';
+		// On a category: only the makes in it, with their count there, linking to the make × category page.
+		$in_cat = is_tax( LM_Model::CATEGORY ) && get_queried_object() instanceof WP_Term ? get_queried_object() : null;
+		if ( $in_cat ) {
+			$mk = LM_Combo::current();
+			$counts = LM_Combo::makes_in( $in_cat );
+			$terms = $counts ? get_terms( [ 'taxonomy' => LM_Model::MAKE, 'include' => array_keys( $counts ), 'hide_empty' => false, 'orderby' => 'name' ] ) : [];
+			foreach ( $terms as $m ) {
+				$on = $mk && $mk['make']->term_id === $m->term_id;
+				$html .= '<li><a' . ( $on ? ' class="on"' : '' ) . ' href="' . esc_url( $on ? get_term_link( $in_cat ) : LM_Combo::url( $in_cat, $m ) ) . '">' . esc_html( wp_specialchars_decode( $m->name ) ) . ' <span>' . (int) $counts[ $m->term_id ] . '</span></a></li>';
+			}
+			return '<aside class="lmf-filters">' . $html . '</ul></aside>';
+		}
 		foreach ( get_terms( [ 'taxonomy' => LM_Model::MAKE, 'hide_empty' => true, 'orderby' => 'name' ] ) as $m ) {
 			$html .= '<li><a' . ( $cur_make === $m->slug ? ' class="on"' : '' ) . ' href="' . esc_url( get_term_link( $m ) ) . '">' . esc_html( wp_specialchars_decode( $m->name ) ) . ' <span>' . (int) $m->count . '</span></a></li>';
 		}
@@ -206,6 +218,7 @@ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded'
 	public static function archive_title() {
 		$title = 'Heavy equipment for sale';
 		if ( is_tax() ) $title = wp_specialchars_decode( single_term_title( '', false ) ) . ( is_tax( LM_Model::MAKE ) ? ' equipment' : '' ) . ' for sale';
+		if ( $c = LM_Combo::current() ) $title = LM_Combo::name( $c['cat'], $c['make'] ) . ' for sale';
 		if ( is_author() ) {
 			global $wp_query;
 			return '<h2 class="lmf-h2">Equipment for sale (' . (int) $wp_query->found_posts . ')</h2>';

@@ -120,6 +120,14 @@ auctions, prices, buying-guides, selling.
 Importador CSV/Sandhills · tabla propia de búsqueda + buscador ·
 contactos y medición · páginas SEO de categoría/marca/modelo · widget para la web de Kurtz.
 
+## 0.18.0: páginas marca × categoría (13-nov-2026)
+- URL `/for-sale/<padre>/<categoría>/<marca>/` (p. ej. `/for-sale/construction/skid-steers/bobcat/`), paginación `/page/N/`. Sin regla de reescritura nueva: `LM_Combo::resolve()` (filtro `request`) separa el último tramo cuando es una marca y no una categoría.
+- Indexable solo en categorías hoja y con 3 o más avisos no vendidos (`LM_Combo::MIN`). Las demás combinaciones funcionan, pero quedan `noindex, follow`. Canonical propio (filtro `seopress_titles_canonical`).
+- Title "Used Bobcat Skid Steers for Sale", description con conteo y mediana, H1 "Bobcat Skid Steers for sale", migas Equipment / Construction / Skid Steers / Bobcat, BreadcrumbList e ItemList. No hay FAQ.
+- La intro se genera con cifras en vivo (`LM_Landing::stats( $cat, $make )`) y enlaza la categoría y la marca. No repite el texto de la categoría.
+- Enlaces: chips "Shop by make" bajo la intro de cada categoría hoja (solo las combinaciones indexables). En la barra lateral de una categoría, la lista de marcas muestra solo las de esa categoría, con su conteo ahí, y enlaza a la combinación.
+- Falta: las combinaciones no están en el sitemap de SEOPress (se descubren por enlaces internos).
+
 ## 0.17.1: arreglo de indexación (13-nov-2026)
 - En 0.16.0 `noindex_reason()` devolvía la descripción SEO personalizada como motivo, así que toda categoría con `lm_seo_desc` salía `noindex, follow` (las 6 landings, del 12 al 13-nov). Quitada esa línea: la descripción solo se usa en `desc_for_current()`.
 

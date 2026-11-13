@@ -256,3 +256,7 @@
 .lmf-cat-body th, .lmf-cat-body td { padding: 10px 12px; border-bottom: 1px solid var(--lmf-line); text-align: left; }
 .lmf-faq h3 { font-size: 19px; margin-top: 1.4em; }
 @media (max-width: 767px) { .lmf-cat-intro { font-size: 16px; } .lmf-cat-body { margin-top: 40px; } .lmf-cat-body table { display: block; overflow-x: auto; } }
+
+/* 0.18.0 make × category */
+.lmf-bymake { display: grid; gap: 8px; margin: 4px 0 20px; }
+.lmf-bymake .lmf-chips { margin: 0; }

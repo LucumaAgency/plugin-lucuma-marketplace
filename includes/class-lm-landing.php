@@ -73,10 +73,13 @@ class LM_Landing {
 	}
 
 	/** Live numbers for a category (children included): listings not sold. */
-	public static function stats( WP_Term $t ): array {
-		if ( isset( self::$stats[ $t->term_id ] ) ) return self::$stats[ $t->term_id ];
+	public static function stats( WP_Term $t, ?WP_Term $make = null ): array {
+		$key = $t->term_id . ( $make ? '-' . $make->term_id : '' );
+		if ( isset( self::$stats[ $key ] ) ) return self::$stats[ $key ];
+		$tax = [ [ 'taxonomy' => LM_Model::CATEGORY, 'field' => 'term_id', 'terms' => $t->term_id, 'include_children' => true ] ];
+		if ( $make ) $tax[] = [ 'taxonomy' => LM_Model::MAKE, 'field' => 'term_id', 'terms' => $make->term_id ];
 		$ids = get_posts( [ 'post_type' => LM_Model::PT, 'post_status' => 'publish', 'posts_per_page' => -1, 'fields' => 'ids', 'no_found_rows' => true,
-			'tax_query' => [ [ 'taxonomy' => LM_Model::CATEGORY, 'field' => 'term_id', 'terms' => $t->term_id, 'include_children' => true ] ] ] );
+			'tax_query' => $tax ] );
 		update_meta_cache( 'post', $ids );
 		$prices = [];
 		$dealers = [];
@@ -92,7 +95,7 @@ class LM_Landing {
 		$c = count( $prices );
 		$median = $c ? ( $c % 2 ? $prices[ intdiv( $c, 2 ) ] : ( $prices[ $c / 2 - 1 ] + $prices[ $c / 2 ] ) / 2 ) : 0;
 		$money = fn( $v ) => '$' . number_format( round( $v / 100 ) * 100 );
-		return self::$stats[ $t->term_id ] = [
+		return self::$stats[ $key ] = [
 			'{count}'        => number_format( $n ),
 			'{median_price}' => $c ? $money( $median ) : 'call for price',
 			'{price_range}'  => $c ? $money( $prices[0] ) . ' to ' . $money( $prices[ $c - 1 ] ) : 'call for price',
@@ -125,20 +128,25 @@ class LM_Landing {
 	public static function archive_crumbs() {
 		if ( ! is_tax( [ LM_Model::CATEGORY, LM_Model::MAKE, LM_Model::MODEL ] ) ) return '';
 		$parts = [];
-		foreach ( self::trail( get_queried_object() ) as $i => [ $name, $url ] ) {
+		foreach ( self::trail( get_queried_object(), LM_Combo::current()['make'] ?? null ) as $i => [ $name, $url ] ) {
 			$parts[] = $url ? '<a href="' . esc_url( $url ) . '">' . esc_html( $name ) . '</a>' : '<span aria-current="page">' . esc_html( $name ) . '</span>';
 		}
 		return '<nav class="lmf-crumbs" aria-label="Breadcrumb">' . implode( ' <span>/</span> ', $parts ) . '</nav>';
 	}
 
 	/** [[name, url|null]]: last item has no URL (current page). */
-	private static function trail( WP_Term $t ): array {
+	private static function trail( WP_Term $t, ?WP_Term $make = null ): array {
 		$items = [ [ 'Equipment', get_post_type_archive_link( LM_Model::PT ) ] ];
 		if ( $t->taxonomy === LM_Model::CATEGORY ) {
 			foreach ( array_reverse( get_ancestors( $t->term_id, LM_Model::CATEGORY, 'taxonomy' ) ) as $a ) {
 				$p = get_term( $a );
 				if ( $p && ! is_wp_error( $p ) ) $items[] = [ wp_specialchars_decode( $p->name, ENT_QUOTES ), get_term_link( $p ) ];
 			}
+		}
+		if ( $make ) {
+			$items[] = [ wp_specialchars_decode( $t->name, ENT_QUOTES ), get_term_link( $t ) ];
+			$items[] = [ wp_specialchars_decode( $make->name, ENT_QUOTES ), null ];
+			return $items;
 		}
 		$items[] = [ wp_specialchars_decode( $t->name, ENT_QUOTES ), null ];
 		return $items;
@@ -147,13 +155,14 @@ class LM_Landing {
 	public static function category_intro() {
 		$t = self::current();
 		if ( ! $t || ! self::clean_view() ) return '';
+		if ( LM_Combo::current() ) return LM_Combo::intro();
 		$html = self::meta( $t, 'lm_intro' );
-		return $html ? '<div class="lmf-cat-intro">' . self::fill( $html, $t ) . '</div>' : '';
+		return ( $html ? '<div class="lmf-cat-intro">' . self::fill( $html, $t ) . '</div>' : '' ) . LM_Combo::chips( $t );
 	}
 
 	public static function category_content() {
 		$t = self::current();
-		if ( ! $t || ! self::clean_view() ) return '';
+		if ( ! $t || ! self::clean_view() || LM_Combo::current() ) return '';
 		$body = self::meta( $t, 'lm_body' );
 		$faq = self::faq( $t );
 		if ( ! $body && ! $faq ) return '';
@@ -171,12 +180,13 @@ class LM_Landing {
 	public static function json_ld() {
 		$t = self::current();
 		if ( ! $t ) return;
-		$url = get_term_link( $t );
-		if ( is_wp_error( $url ) ) return;
+		$combo = LM_Combo::current();
+		$url = $combo ? LM_Combo::url( $combo['cat'], $combo['make'] ) : get_term_link( $t );
+		if ( is_wp_error( $url ) || ! $url ) return;
 		$graph = [];
 
 		$list = [];
-		foreach ( self::trail( $t ) as $i => [ $name, $u ] ) {
+		foreach ( self::trail( $t, $combo['make'] ?? null ) as $i => [ $name, $u ] ) {
 			$list[] = [ '@type' => 'ListItem', 'position' => $i + 1, 'name' => $name, 'item' => $u && ! is_wp_error( $u ) ? $u : $url ];
 		}
 		$graph[] = [ '@type' => 'BreadcrumbList', '@id' => $url . '#breadcrumb', 'itemListElement' => $list ];
@@ -188,10 +198,10 @@ class LM_Landing {
 				$items[] = [ '@type' => 'ListItem', 'position' => $i + 1, 'url' => get_permalink( $p ), 'name' => get_the_title( $p ) ];
 			}
 			if ( $items ) {
-				$graph[] = [ '@type' => 'ItemList', '@id' => $url . '#list', 'name' => wp_specialchars_decode( $t->name, ENT_QUOTES ) . ' for sale',
+				$graph[] = [ '@type' => 'ItemList', '@id' => $url . '#list', 'name' => ( $combo ? LM_Combo::name( $t, $combo['make'] ) : wp_specialchars_decode( $t->name, ENT_QUOTES ) ) . ' for sale',
 					'numberOfItems' => (int) $wp_query->found_posts, 'itemListElement' => $items ];
 			}
-			$faq = self::faq( $t );
+			$faq = $combo ? [] : self::faq( $t );
 			if ( $faq ) {
 				$graph[] = [ '@type' => 'FAQPage', '@id' => $url . '#faq', 'mainEntity' => array_map( fn( $f ) => [
 					'@type' => 'Question', 'name' => self::fill( $f['q'], $t ),
