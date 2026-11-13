@@ -126,7 +126,7 @@ contactos y medición · páginas SEO de categoría/marca/modelo · widget para 
 - Title "Used Bobcat Skid Steers for Sale", description con conteo y mediana, H1 "Bobcat Skid Steers for sale", migas Equipment / Construction / Skid Steers / Bobcat, BreadcrumbList e ItemList. No hay FAQ.
 - La intro se genera con cifras en vivo (`LM_Landing::stats( $cat, $make )`) y enlaza la categoría y la marca. No repite el texto de la categoría.
 - Enlaces: chips "Shop by make" bajo la intro de cada categoría hoja (solo las combinaciones indexables). En la barra lateral de una categoría, la lista de marcas muestra solo las de esa categoría, con su conteo ahí, y enlaza a la combinación.
-- Falta: las combinaciones no están en el sitemap de SEOPress (se descubren por enlaces internos).
+- 0.18.1: sitemap propio `/make-category-sitemap.xml` con las combinaciones indexables (lastmod = aviso más reciente), sumado al índice `/sitemaps.xml` de SEOPress con el filtro `seopress_sitemaps_external_link`. Caché hasta que se guarde un aviso.
 
 ## 0.17.1: arreglo de indexación (13-nov-2026)
 - En 0.16.0 `noindex_reason()` devolvía la descripción SEO personalizada como motivo, así que toda categoría con `lm_seo_desc` salía `noindex, follow` (las 6 landings, del 12 al 13-nov). Quitada esa línea: la descripción solo se usa en `desc_for_current()`.

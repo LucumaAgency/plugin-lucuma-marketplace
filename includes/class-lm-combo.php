@@ -19,6 +19,42 @@ class LM_Combo {
 	public static function init() {
 		add_filter( 'request', [ __CLASS__, 'resolve' ] );
 		add_filter( 'seopress_titles_canonical', [ __CLASS__, 'canonical' ], 20 );
+		add_filter( 'seopress_sitemaps_external_link', [ __CLASS__, 'sitemap_index' ] );
+		add_action( 'parse_request', [ __CLASS__, 'sitemap' ] );
+	}
+
+	const SITEMAP = 'make-category-sitemap.xml';
+
+	/** Listed in SEOPress's /sitemaps.xml index. */
+	public static function sitemap_index( $list ) {
+		$list = is_array( $list ) ? $list : [];
+		$list[] = [ 'sitemap_url' => home_url( '/' . self::SITEMAP ) ];
+		return $list;
+	}
+
+	/** /make-category-sitemap.xml: every indexable make × category page, with the date of its newest listing change. */
+	public static function sitemap( WP $wp ) {
+		if ( $wp->request !== self::SITEMAP ) return;
+		$key = 'lm_combo_sitemap_' . (int) get_option( LM_Seo::CACHE_KEY, 1 );
+		$xml = get_transient( $key );
+		if ( ! is_string( $xml ) ) {
+			$xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n" . '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
+			foreach ( get_terms( [ 'taxonomy' => LM_Model::CATEGORY, 'hide_empty' => true ] ) as $cat ) {
+				foreach ( self::links( $cat ) as [ $make, $n, $url ] ) {
+					$last = get_posts( [ 'post_type' => LM_Model::PT, 'post_status' => 'publish', 'posts_per_page' => 1, 'orderby' => 'modified', 'order' => 'DESC',
+						'no_found_rows' => true, 'tax_query' => [ [ 'taxonomy' => LM_Model::CATEGORY, 'terms' => $cat->term_id, 'include_children' => true ],
+						[ 'taxonomy' => LM_Model::MAKE, 'terms' => $make->term_id ] ] ] );
+					$xml .= '<url><loc>' . esc_url( $url ) . '</loc>' . ( $last ? '<lastmod>' . get_post_modified_time( 'c', true, $last[0] ) . '</lastmod>' : '' ) . "</url>\n";
+				}
+			}
+			$xml .= '</urlset>';
+			set_transient( $key, $xml, DAY_IN_SECONDS );
+		}
+		status_header( 200 );
+		header( 'Content-Type: application/xml; charset=UTF-8' );
+		header( 'X-Robots-Tag: noindex, follow', true );
+		echo $xml; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built above with esc_url.
+		exit;
 	}
 
 	/** /for-sale/construction/skid-steers/bobcat/ → lm_category=construction/skid-steers + lm_make=bobcat. */
