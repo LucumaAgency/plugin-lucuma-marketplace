@@ -31,7 +31,7 @@ class LM_Dealers {
 
 	/** Public business profile fields in REST (/wp/v2/users), editable by admins (set up dealers for them). */
 	public static function register_meta() {
-		foreach ( [ 'lm_company', 'lm_phone', 'lm_website', 'lm_address', 'lm_city', 'lm_state', 'lm_zip' ] as $k ) {
+		foreach ( [ 'lm_company', 'lm_phone', 'lm_website', 'lm_address', 'lm_city', 'lm_state', 'lm_zip', 'lm_opening_hours', 'lm_gbp' ] as $k ) {
 			register_meta( 'user', $k, [ 'type' => 'string', 'single' => true, 'show_in_rest' => true,
 				'auth_callback' => fn() => current_user_can( 'edit_users' ) ] );
 		}
@@ -52,6 +52,51 @@ class LM_Dealers {
 
 	public static function place( int $u ): string {
 		return implode( ', ', array_filter( [ get_user_meta( $u, 'lm_city', true ), get_user_meta( $u, 'lm_state', true ) ] ) );
+	}
+
+	const DAYS = [ 'mo' => 'Mon', 'tu' => 'Tue', 'we' => 'Wed', 'th' => 'Thu', 'fr' => 'Fri', 'sa' => 'Sat', 'su' => 'Sun' ];
+
+	/**
+	 * Opening hours typed as "Mon-Fri 7:30-17:00; Sat 8:00-12:00" (also accepts "Mo-Fr 07:30-17:00", "7:30am-5pm").
+	 * Returns one row per segment: ['schema' => 'Mo-Fr 07:30-17:00', 'label' => 'Mon to Fri 7:30 am to 5:00 pm'].
+	 * Segments that don't parse are skipped, so a typo never reaches the schema.
+	 */
+	public static function hours( int $u ): array {
+		$out = [];
+		foreach ( preg_split( '/[;\n]+/', (string) get_user_meta( $u, 'lm_opening_hours', true ) ) as $seg ) {
+			$t = '(\d{1,2})(?::(\d{2}))?\s*(am|pm|a\.m\.|p\.m\.)?';
+			if ( ! preg_match( '/^\s*([a-z]{2})[a-z]*\.?(?:\s*(?:-|–|to)\s*([a-z]{2})[a-z]*\.?)?\s*:?\s+' . $t . '\s*(?:-|–|to)\s*' . $t . '\s*$/i', $seg, $m ) ) continue;
+			$d1 = strtolower( $m[1] ); $d2 = strtolower( $m[2] ?? '' );
+			if ( ! isset( self::DAYS[ $d1 ] ) || ( $d2 !== '' && ! isset( self::DAYS[ $d2 ] ) ) ) continue;
+			$o = self::hm( $m[3], $m[4] ?? '', $m[5] ?? '' ); $c = self::hm( $m[6], $m[7] ?? '', $m[8] ?? '' );
+			if ( $o && $c && $c <= $o && empty( $m[8] ) && empty( $m[5] ) && (int) $m[3] < 12 && (int) $m[6] < 12 ) $c = self::hm( $m[6], $m[7] ?? '', 'pm' ); // "8-5" = 8 am to 5 pm
+			if ( ! $o || ! $c || $c <= $o ) continue;
+			$days = ucfirst( $d1 ) . ( $d2 ? '-' . ucfirst( $d2 ) : '' );
+			$out[] = [ 'schema' => "$days $o-$c",
+				'label' => self::DAYS[ $d1 ] . ( $d2 ? ' to ' . self::DAYS[ $d2 ] : '' ) . ' ' . self::ampm( $o ) . ' to ' . self::ampm( $c ) ];
+		}
+		return $out;
+	}
+
+	private static function hm( string $h, string $min, string $ap ): string {
+		$h = (int) $h; $ap = strtolower( str_replace( '.', '', $ap ) );
+		if ( $ap === 'pm' && $h < 12 ) $h += 12;
+		if ( $ap === 'am' && $h === 12 ) $h = 0;
+		return $h <= 24 ? sprintf( '%02d:%02d', $h, (int) $min ) : '';
+	}
+
+	private static function ampm( string $hm ): string {
+		[ $h, $m ] = array_map( 'intval', explode( ':', $hm ) );
+		return ( $h % 12 ?: 12 ) . ':' . sprintf( '%02d', $m ) . ( $h < 12 ? ' am' : ' pm' );
+	}
+
+	/** Google Maps link: the dealer's Google Business Profile if set, otherwise a search for the street address. */
+	public static function map_url( int $u ): string {
+		$gbp = (string) get_user_meta( $u, 'lm_gbp', true );
+		if ( $gbp ) return $gbp;
+		$m = fn( $k ) => (string) get_user_meta( $u, $k, true );
+		if ( ! $m( 'lm_address' ) ) return '';
+		return 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode( implode( ', ', array_filter( [ self::company( $u ), $m( 'lm_address' ), self::place( $u ), $m( 'lm_zip' ) ] ) ) );
 	}
 
 	public static function count_listings( int $u ): int {
@@ -183,9 +228,11 @@ class LM_Dealers {
 			'<h1 class="lmf-h1">' . esc_html( $company ) . '</h1>' .
 			'<p class="lmf-meta">' . esc_html( implode( ' · ', array_filter( [ $addr, $n . ' ' . ( $n === 1 ? 'listing' : 'listings' ) ] ) ) ) . '</p>' .
 			( $cats ? '<p class="lmf-sub">' . esc_html( implode( ' · ', array_map( fn( $k, $v ) => "$k ($v)", array_keys( $cats ), $cats ) ) ) . '</p>' : '' ) .
+			( ( $hours = self::hours( $u ) ) ? '<p class="lmf-sub lmf-dhours">Open ' . esc_html( implode( ' · ', array_column( $hours, 'label' ) ) ) . '</p>' : '' ) .
 			'</div><div class="lmf-dprofile-actions">' .
 			( $phone ? '<a class="lmf-btn" href="tel:' . esc_attr( preg_replace( '/[^0-9+]/', '', $phone ) ) . '" data-lm-event="call"' . $track . '>Call ' . esc_html( $phone ) . '</a>' : '' ) .
 			( $web ? '<a class="lmf-btn ghost" href="' . esc_url( $web ) . '" target="_blank" rel="noopener" data-lm-event="dealer_website"' . $track . '>Visit website ↗</a>' : '' ) .
+			( ( $map = self::map_url( $u ) ) ? '<a class="lmf-btn ghost" href="' . esc_url( $map ) . '" target="_blank" rel="noopener" data-lm-event="directions"' . $track . '>Get directions ↗</a>' : '' ) .
 			'</div></div>';
 		$auctions = self::upcoming_auctions( $u );
 		if ( $auctions ) {

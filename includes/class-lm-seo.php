@@ -355,15 +355,29 @@ class LM_Seo {
 		return $p;
 	}
 
+	/**
+	 * Dealer profile = the dealer's location page. LocalBusiness when we have a street address (Google needs it),
+	 * Organization otherwise. Hours only if they parse, and they are also shown on the page.
+	 */
 	private static function dealer_org( int $u ): array {
 		$m = fn( $k ) => (string) get_user_meta( $u, $k, true );
-		$o = [ '@type' => 'Organization', '@id' => LM_Dealers::url( $u ) . '#dealer', 'name' => LM_Dealers::company( $u ), 'url' => LM_Dealers::url( $u ),
-			'address' => array_filter( [ '@type' => 'PostalAddress', 'streetAddress' => $m( 'lm_address' ), 'addressLocality' => $m( 'lm_city' ),
-				'addressRegion' => $m( 'lm_state' ), 'postalCode' => $m( 'lm_zip' ), 'addressCountry' => 'US' ] ) ];
+		$url = LM_Dealers::url( $u );
+		$address = array_filter( [ '@type' => 'PostalAddress', 'streetAddress' => $m( 'lm_address' ), 'addressLocality' => $m( 'lm_city' ),
+			'addressRegion' => $m( 'lm_state' ), 'postalCode' => $m( 'lm_zip' ), 'addressCountry' => 'US' ] );
+		$local = $m( 'lm_address' ) !== '' && $m( 'lm_city' ) !== '';
+		$o = [ '@type' => $local ? 'LocalBusiness' : 'Organization', '@id' => $url . '#dealer', 'name' => LM_Dealers::company( $u ), 'url' => $url, 'address' => $address ];
 		if ( $m( 'lm_phone' ) ) $o['telephone'] = $m( 'lm_phone' );
-		if ( $m( 'lm_website' ) ) $o['sameAs'] = [ $m( 'lm_website' ) ];
+		$same = array_values( array_filter( [ $m( 'lm_website' ), $m( 'lm_gbp' ) ] ) );
+		if ( $same ) $o['sameAs'] = $same;
 		$logo = (int) $m( 'lm_logo' );
-		if ( $logo && ( $src = wp_get_attachment_image_url( $logo, 'medium' ) ) ) $o['logo'] = $src;
+		if ( $logo && ( $src = wp_get_attachment_image_url( $logo, 'medium' ) ) ) { $o['logo'] = $src; $o['image'] = $src; }
+		if ( $local ) {
+			$hours = array_column( LM_Dealers::hours( $u ), 'schema' );
+			if ( $hours ) $o['openingHours'] = count( $hours ) === 1 ? $hours[0] : $hours;
+			if ( $map = LM_Dealers::map_url( $u ) ) $o['hasMap'] = $map;
+			$cats = array_keys( LM_Dealers::top_categories( $u, 4 ) );
+			if ( $cats ) $o['description'] = 'Used ' . strtolower( implode( ', ', $cats ) ) . ' for sale from ' . LM_Dealers::company( $u ) . ' in ' . LM_Dealers::place( $u ) . '.';
+		}
 		return $o;
 	}
 

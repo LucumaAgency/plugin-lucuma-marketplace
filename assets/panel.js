@@ -320,6 +320,8 @@
           field('City', input('city', p.city, 'text', 'maxlength="80"')) +
           field('State', input('state', p.state, 'text', 'maxlength="2"')) +
           field('ZIP', input('zip', p.zip, 'text', 'maxlength="10"')) +
+          field('Opening hours', input('hours', p.hours, 'text', 'maxlength="160" placeholder="Mon-Fri 7:30-17:00; Sat 8:00-12:00"'), 'Days and times, one range per group, separated by ;', true) +
+          field('Google Business Profile link', input('gbp', p.gbp, 'url', 'placeholder="https://maps.app.goo.gl/…"'), 'Your Google Maps listing. Used for the Directions button.', true) +
         '</div></section><section><h3>Logo</h3><div class="lmp-logo"></div><input type="file" accept="image/*" hidden>' +
         '<button type="button" class="lmp-btn ghost" data-logo>Upload logo</button></section>' +
         '<div class="lmp-save"><button class="lmp-btn" type="submit">Save profile</button><span class="lmp-muted">Login email: ' + esc(p.email) + '</span></div></form>');
@@ -339,7 +341,7 @@
       form.addEventListener('submit', function (e) {
         e.preventDefault();
         var b = { logo: logo ? logo.id : 0 };
-        ['company', 'name', 'phone', 'website', 'address', 'city', 'state', 'zip'].forEach(function (k) { b[k] = form.elements[k].value; });
+        ['company', 'name', 'phone', 'website', 'address', 'city', 'state', 'zip', 'hours', 'gbp'].forEach(function (k) { b[k] = form.elements[k].value; });
         api('my/profile', { body: b }).then(function () { message('Profile saved.'); }).catch(function (err) { message(err.message, true); });
       });
     }).catch(function (e) { message(e.message, true); });

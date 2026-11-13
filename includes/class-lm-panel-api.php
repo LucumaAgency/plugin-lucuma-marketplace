@@ -20,7 +20,7 @@ class LM_Panel_Api {
 
 	const PROFILE = [
 		'lm_company' => 'company', 'lm_phone' => 'phone', 'lm_website' => 'website', 'lm_address' => 'address',
-		'lm_city' => 'city', 'lm_state' => 'state', 'lm_zip' => 'zip',
+		'lm_city' => 'city', 'lm_state' => 'state', 'lm_zip' => 'zip', 'lm_opening_hours' => 'hours', 'lm_gbp' => 'gbp',
 	];
 
 	public static function init() {
@@ -282,7 +282,7 @@ class LM_Panel_Api {
 		foreach ( self::PROFILE as $meta => $k ) {
 			if ( ! array_key_exists( $k, $b ) ) continue;
 			$v = trim( sanitize_text_field( (string) $b[ $k ] ) );
-			if ( $k === 'website' ) $v = esc_url_raw( $v );
+			if ( $k === 'website' || $k === 'gbp' ) $v = esc_url_raw( $v );
 			if ( $k === 'state' ) $v = preg_match( '/^[A-Za-z]{2}$/', $v ) ? strtoupper( $v ) : '';
 			update_user_meta( $id, $meta, mb_substr( $v, 0, 200 ) );
 		}
