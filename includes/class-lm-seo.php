@@ -256,7 +256,6 @@ class LM_Seo {
 			global $wp_query;
 			if ( ! $wp_query->found_posts ) return 'empty month';
 		}
-		if ( is_tax( LM_Model::CATEGORY ) && ( $custom = LM_Landing::seo( get_queried_object(), 'desc' ) ) !== null ) return $custom;
 		if ( is_tax( [ LM_Model::CATEGORY, LM_Model::MAKE, LM_Model::MODEL ] ) ) {
 			$t = get_queried_object();
 			if ( ! self::term_indexable( $t ) ) return 'thin';

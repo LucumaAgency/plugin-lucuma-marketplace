@@ -120,6 +120,9 @@ auctions, prices, buying-guides, selling.
 Importador CSV/Sandhills · tabla propia de búsqueda + buscador ·
 contactos y medición · páginas SEO de categoría/marca/modelo · widget para la web de Kurtz.
 
+## 0.17.1: arreglo de indexación (13-nov-2026)
+- En 0.16.0 `noindex_reason()` devolvía la descripción SEO personalizada como motivo, así que toda categoría con `lm_seo_desc` salía `noindex, follow` (las 6 landings, del 12 al 13-nov). Quitada esa línea: la descripción solo se usa en `desc_for_current()`.
+
 ## 0.17.0: perfil de dealer como sede local (13-nov-2026)
 - Meta de usuario nueva: `lm_opening_hours` (texto libre tipo `Mon-Fri 7:30-17:00; Sat 8:00-12:00`, también acepta `Mo-Fr 07:30-17:00` y `8am-5pm`) y `lm_gbp` (enlace a la ficha de Google Business Profile). Editables en el panel (Company profile) y por REST `/wp/v2/users/{id}` (admins).
 - `LM_Dealers::hours()` interpreta el horario; los tramos que no se entienden se ignoran (nunca llegan al schema). `LM_Dealers::map_url()`: GBP si existe, si no búsqueda en Google Maps con la dirección.
