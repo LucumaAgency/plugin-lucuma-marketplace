@@ -119,3 +119,11 @@ auctions, prices, buying-guides, selling.
 ## Siguiente (outline, orden de trabajo)
 Importador CSV/Sandhills · tabla propia de búsqueda + buscador ·
 contactos y medición · páginas SEO de categoría/marca/modelo · widget para la web de Kurtz.
+
+## 0.16.0: landings de categoría (12-nov-2026)
+
+El archivo de categoría es la landing (decisión en `marketplace-maquinaria/seo/estructura-urls.md`). Meta de término en `lm_category`, editable por REST (`/wp/v2/equipment-categories/<id>` → `meta`) y en wp-admin (editar categoría):
+`lm_intro` (HTML bajo el H1), `lm_body` (HTML bajo la grilla), `lm_faq` (`[{q, a}]`), `lm_seo_title` (sin " | Heavy Listing"), `lm_seo_desc`.
+Tokens en vivo: `{count}` `{median_price}` `{price_range}` `{dealers}` (inventario no vendido de la categoría y sus hijas).
+Shortcodes: `[lm_archive_crumbs]` (categoría, marca y modelo), `[lm_category_intro]`, `[lm_category_content]` (cuerpo + FAQ). Intro y cuerpo solo en la vista limpia (página 1, sin filtros).
+JSON-LD en archivos de categoría: BreadcrumbList siempre; ItemList y FAQPage en la vista limpia.

@@ -246,3 +246,13 @@
 .lmf-prose .lmf-auction-body > *, .lmf-prose .lmf-card-body > * { margin-top: 0; }
 .lmf-prose .lmf-auctions > * + *, .lmf-prose .lmf-grid > * + * { margin-top: 0; }
 .lmf-prose .lmf-meta, .lmf-prose .lmf-kicker { margin: 0; line-height: 1.4; }
+
+/* 0.16.0 category landings */
+.lmf-cat-intro { font-family: var(--lm-font, inherit); max-width: 820px; margin-top: 10px; font-size: 17px; line-height: 1.6; color: var(--lmf-body); }
+.lmf-cat-intro p { margin: 0 0 .6em; }
+.lmf-cat-intro a, .lmf-cat-body a { color: var(--lmf-accent-dk); text-decoration: underline; }
+.lmf-cat-body { max-width: 820px; margin: 56px auto 0; padding-top: 8px; border-top: 1px solid var(--lmf-line); }
+.lmf-cat-body table { width: 100%; border-collapse: collapse; font-size: 16px; }
+.lmf-cat-body th, .lmf-cat-body td { padding: 10px 12px; border-bottom: 1px solid var(--lmf-line); text-align: left; }
+.lmf-faq h3 { font-size: 19px; margin-top: 1.4em; }
+@media (max-width: 767px) { .lmf-cat-intro { font-size: 16px; } .lmf-cat-body { margin-top: 40px; } .lmf-cat-body table { display: block; overflow-x: auto; } }
