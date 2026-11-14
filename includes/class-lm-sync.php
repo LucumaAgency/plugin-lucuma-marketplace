@@ -185,9 +185,25 @@ class LM_Sync {
 		update_post_meta( $post_id, 'lm_gallery', $ids );
 		if ( $ids ) set_post_thumbnail( $post_id, $ids[0] ); else delete_post_thumbnail( $post_id );
 		foreach ( array_diff( $before, $ids ) as $old ) {
-			if ( get_post_meta( $old, '_lm_yard_photo', true ) ) wp_delete_attachment( $old, true );
+			if ( self::deletable( $old, $post_id ) ) wp_delete_attachment( $old, true );
 		}
 		return [ 'count' => count( $ids ), 'failed' => $failed ];
+	}
+
+	/**
+	 * Una foto que sale de la galería solo se borra si es de Yard, pertenece a esta ficha y ninguna
+	 * otra ficha la usa. Sitios importados comparten un mismo adjunto entre fichas iguales: la
+	 * primera lo adopta y la segunda baja su copia, sin borrar el de la otra (bug de 0.19.1).
+	 */
+	private static function deletable( int $att, int $post_id ): bool {
+		if ( ! get_post_meta( $att, '_lm_yard_photo', true ) ) return false;
+		if ( (int) wp_get_post_parent_id( $att ) !== $post_id ) return false;
+		global $wpdb;
+		$used = (int) $wpdb->get_var( $wpdb->prepare(
+			"SELECT COUNT(*) FROM {$wpdb->postmeta} WHERE post_id <> %d AND ( ( meta_key = '_thumbnail_id' AND meta_value = %s ) OR ( meta_key = 'lm_gallery' AND ( meta_value LIKE %s OR meta_value LIKE %s ) ) )",
+			$post_id, (string) $att, '%;i:' . $att . ';%', '%"' . $att . '";%'
+		) );
+		return $used === 0;
 	}
 
 	/** Adjunto ya bajado para esta foto de Yard, o el de este sitio del que salió la foto. */

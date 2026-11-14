@@ -120,6 +120,12 @@ auctions, prices, buying-guides, selling.
 Importador CSV/Sandhills · tabla propia de búsqueda + buscador ·
 contactos y medición · páginas SEO de categoría/marca/modelo · widget para la web de Kurtz.
 
+## 0.19.0: sincronización desde Heavy Listing Yard (14-nov-2026)
+- `includes/class-lm-sync.php`: rutas firmadas `lucuma-mkt/v1/sync/{ping,equipment,dealer}` (HMAC-SHA256 con la opción `lm_yard_secret`) y `sync/secret` (administradores). Yard manda; la ficha se guarda con la lógica del panel del dealer.
+- Las fichas existentes se reconocen sin duplicar; conservan su fecha. Borrar en Yard = borrador. Los dealers con `lm_yard_managed` ven el panel `/dealer/` en solo lectura.
+- 0.19.1: el id de WordPress que manda Yard solo se usa si la ficha ya es de esa unidad (`lm_yard_id`) o, sin marca, si el stock coincide.
+- 0.19.2: una foto que sale de la galería solo se borra si es de Yard, su padre es esa ficha y ninguna otra ficha la usa (destacada o `lm_gallery`). En el paso a producción, los modelos repetidos de Kurtz compartían un adjunto: la segunda ficha de cada par lo borró y dejó sin foto a la primera (71, 9, 79, 172). Se recuperaron reenviando desde Yard.
+
 ## 0.18.0: páginas marca × categoría (13-nov-2026)
 - URL `/for-sale/<padre>/<categoría>/<marca>/` (p. ej. `/for-sale/construction/skid-steers/bobcat/`), paginación `/page/N/`. Sin regla de reescritura nueva: `LM_Combo::resolve()` (filtro `request`) separa el último tramo cuando es una marca y no una categoría.
 - Indexable solo en categorías hoja y con 3 o más avisos no vendidos (`LM_Combo::MIN`). Las demás combinaciones funcionan, pero quedan `noindex, follow`. Canonical propio (filtro `seopress_titles_canonical`).
