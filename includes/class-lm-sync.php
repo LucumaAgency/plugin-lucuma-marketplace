@@ -140,7 +140,13 @@ class LM_Sync {
 	}
 
 	private static function find( int $wp_post_id, string $yard_id, int $author, string $stock ): int {
-		if ( $wp_post_id && get_post_type( $wp_post_id ) === LM_Model::PT && (int) get_post_field( 'post_author', $wp_post_id ) === $author ) return $wp_post_id;
+		// El id que manda Yard solo vale si la ficha es de este dealer y no pertenece a otra unidad:
+		// o ya tiene este mismo lm_yard_id, o (si todavía no tiene ninguno) el mismo número de stock.
+		if ( $wp_post_id && get_post_type( $wp_post_id ) === LM_Model::PT && (int) get_post_field( 'post_author', $wp_post_id ) === $author ) {
+			$owner = (string) get_post_meta( $wp_post_id, 'lm_yard_id', true );
+			if ( $owner === $yard_id ) return $wp_post_id;
+			if ( $owner === '' && trim( $stock ) !== '' && (string) get_post_meta( $wp_post_id, 'lm_stock_number', true ) === trim( $stock ) ) return $wp_post_id;
+		}
 		$q = [ 'post_type' => LM_Model::PT, 'post_status' => 'any', 'fields' => 'ids', 'posts_per_page' => 1, 'author' => $author, 'no_found_rows' => true ];
 		$found = get_posts( $q + [ 'meta_key' => 'lm_yard_id', 'meta_value' => $yard_id ] );
 		if ( $found ) return (int) $found[0];
