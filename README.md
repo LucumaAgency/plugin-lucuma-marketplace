@@ -131,6 +131,8 @@ contactos y medición · páginas SEO de categoría/marca/modelo · widget para 
   cookies de terceros), con altura automática. El botón de las tarjetas pasa a "Watch & bid live" (a la misma ficha).
 - "Live now": las tarjetas con `data-lm-live` se marcan solas con la lista pública de Live.
 - GTM: `live_view`, `bidder_register` y `bid_placed` (con `value` en USD), con `auction_id` y `auction_name` de la ficha.
+- 0.20.1: en la ficha de un remate en vivo (`body.lm-live-auction`) la plantilla de dos columnas pasa a una: título,
+  datos en una fila, descripción y el remate a todo el ancho (video a la izquierda, puja a la derecha). Sin tocar Bricks.
 - Dirección de Live: constante `LM_LIVE_URL` o filtro `lm_live_url` (por defecto `https://live.heavylisting.com`).
 
 ## 0.19.0: sincronización desde Heavy Listing Yard (14-nov-2026)

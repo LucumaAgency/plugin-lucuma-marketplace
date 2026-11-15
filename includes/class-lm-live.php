@@ -22,6 +22,11 @@ class LM_Live {
 	public static function init() {
 		add_shortcode( 'lm_live', [ __CLASS__, 'shortcode' ] );
 		add_action( 'wp_footer', [ __CLASS__, 'footer' ], 30 );
+		// Ficha de un remate en vivo: título arriba, datos en una fila, descripción y el remate a todo el ancho (front.css).
+		add_filter( 'body_class', function ( $c ) {
+			if ( is_singular( LM_Auctions::PT ) && get_post_meta( get_queried_object_id(), 'lm_live', true ) ) $c[] = 'lm-live-auction';
+			return $c;
+		} );
 	}
 
 	public static function url(): string {
@@ -51,6 +56,8 @@ class LM_Live {
 		$origin = esc_js( self::url() );
 		if ( self::$bridge ) {
 			// Altura del iframe y eventos para GTM (solo mensajes que vienen de Live).
+			// La plantilla de la ficha tiene dos columnas: el remate sale de la columna y va debajo, a todo el ancho.
+			echo "<script>(function(){document.querySelectorAll('.lmf-live').forEach(function(w){var g=w.closest('.brx-grid');if(g&&g.parentNode)g.parentNode.insertBefore(w,g.nextSibling);});})();</script>\n";
 			echo "<script>(function(){var O='{$origin}';window.addEventListener('message',function(e){if(e.origin!==O||!e.data||e.data.source!=='hl-live')return;" .
 				"var f=document.querySelectorAll('.lmf-live-frame');for(var i=0;i<f.length;i++){if(f[i].contentWindow!==e.source)continue;var box=f[i].parentNode;" .
 				"if(e.data.type==='height'&&e.data.height>200){f[i].style.height=Math.min(e.data.height+4,6000)+'px';f[i].style.minHeight='0';}" .
