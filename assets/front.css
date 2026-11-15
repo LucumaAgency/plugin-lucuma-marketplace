@@ -260,3 +260,10 @@
 /* 0.18.0 make × category */
 .lmf-bymake { display: grid; gap: 8px; margin: 4px 0 20px; }
 .lmf-bymake .lmf-chips { margin: 0; }
+
+/* Heavy Listing Live (LM_Live): remate en vivo dentro de la ficha y aviso "Live now" en las tarjetas. */
+.lmf-live { margin-top: 20px; scroll-margin-top: 90px; }
+.lmf-live-badge { display: inline-flex; align-items: center; gap: 6px; align-self: flex-start; margin-bottom: 6px; padding: 3px 9px; border-radius: 4px; background: #C2261D; color: #fff; font-size: 11.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+.lmf-live-badge::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #fff; animation: lmf-pulse 1.2s infinite; }
+@keyframes lmf-pulse { 50% { opacity: .25; } }
+.lmf-auction.is-live, .lmf-fauction.is-live { box-shadow: inset 0 0 0 2px #C2261D; }

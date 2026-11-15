@@ -10,7 +10,8 @@
  *   [lm_auctions_featured count="3" min="6" title="Featured auctions"]  featured upcoming auctions, full width,
  *                              shuffled on every visit (min = only with that many upcoming; title="" = no heading).
  *                              Lists placed after it on the same page skip the auctions it showed.
- *   [lm_auction_facts]         single auction: date, type, place, auctioneer, catalog button
+ *   [lm_auction_facts]         single auction: date, type, place, auctioneer, catalog button; with Heavy Listing Live
+ *                              (lm_live) the live auction itself, to watch and bid on this page (LM_Live)
  *   /auctions/YYYY-MM/         auctions of one month, past ones included (query var lm_month)
  *   [lm_auctions_title]        h1 + intro for the calendar or the month page
  *   [lm_auction_months]        month chips: this month and the next ones with auctions
@@ -34,6 +35,10 @@ class LM_Auctions {
 		'lm_zip'        => [ 'type' => 'string' ],
 		'lm_url'        => [ 'type' => 'string', 'format' => 'uri' ], // catalog / bidding page on the auctioneer's site
 		'lm_featured'   => [ 'type' => 'boolean' ],
+		// Heavy Listing Live (llegan de Yard, LM_Sync::auction): slug e id del remate en Live y foto (URL de Yard).
+		'lm_live'       => [ 'type' => 'string' ],
+		'lm_live_id'    => [ 'type' => 'string' ],
+		'lm_image'      => [ 'type' => 'string', 'format' => 'uri' ],
 	];
 	const FEATURED_DAYS = 21; // featured block: auctions in the next 3 weeks
 	const MAX_FEATURED_PER_WEEK = 3; // paid spots per calendar week (Mon–Sun): keeps featured worth paying for
@@ -205,11 +210,35 @@ class LM_Auctions {
 
 	/* ------------------------------------------------------------------ public pieces */
 
+	/** Foto de la tarjeta: la destacada, o la de Yard para los remates de Heavy Listing Live. */
+	private static function image( int $id, string $size ): string {
+		$img = get_the_post_thumbnail( $id, $size, [ 'loading' => 'lazy', 'alt' => esc_attr( get_the_title( $id ) ) ] );
+		$ext = (string) self::m( $id, 'lm_image' );
+		return $img ?: ( $ext ? '<img src="' . esc_url( $ext ) . '" alt="' . esc_attr( get_the_title( $id ) ) . '" loading="lazy">' : '' );
+	}
+
+	/** Remate de Heavy Listing Live: atributo para el aviso "Live now" (LM_Live). */
+	private static function live_attr( int $id ): string {
+		$slug = (string) self::m( $id, 'lm_live' );
+		if ( $slug === '' ) return '';
+		LM_Live::want_badges();
+		return ' data-lm-live="' . esc_attr( $slug ) . '"';
+	}
+
+	/** Botón principal: en vivo en esta misma página, o el catálogo en el sitio del rematador. */
+	private static function main_button( int $id, string $placement ): string {
+		if ( self::m( $id, 'lm_live' ) && ! self::ended( $id ) ) {
+			return '<a class="lmf-btn" href="' . esc_url( get_permalink( $id ) . '#live' ) . '"' . self::track( $id, 'auction_catalog', $placement ) . '>Watch &amp; bid live</a>';
+		}
+		$url = (string) self::m( $id, 'lm_url' );
+		return $url ? '<a class="lmf-btn" href="' . esc_url( $url ) . '" target="_blank" rel="noopener"' . self::track( $id, 'auction_catalog', $placement ) . '>View catalog &amp; bidding ↗</a>' : '';
+	}
+
 	private static function card( int $id, bool $badge = true ): string {
 		$s = self::dt( (string) self::m( $id, 'lm_start' ) );
-		$img = get_the_post_thumbnail( $id, 'medium_large', [ 'loading' => 'lazy', 'alt' => esc_attr( get_the_title( $id ) ) ] );
+		$img = self::image( $id, 'medium_large' );
 		$feat = $badge && self::m( $id, 'lm_featured' );
-		return '<article class="lmf-auction' . ( $feat ? ' is-featured' : '' ) . '">' .
+		return '<article class="lmf-auction' . ( $feat ? ' is-featured' : '' ) . '"' . self::live_attr( $id ) . '>' .
 			'<a class="lmf-auction-date" href="' . esc_url( get_permalink( $id ) ) . '"' . self::track( $id, 'auction_open', 'list' ) . '>' . ( $s ? '<span>' . esc_html( $s->format( 'M' ) ) . '</span><strong>' . esc_html( $s->format( 'j' ) ) . '</strong><em>' . esc_html( $s->format( 'D' ) ) . '</em>' : '' ) . '</a>' .
 			( $img ? '<a class="lmf-auction-img" href="' . esc_url( get_permalink( $id ) ) . '"' . self::track( $id, 'auction_open', 'list' ) . '>' . $img . '</a>' : '' ) .
 			'<div class="lmf-auction-body">' .
@@ -231,10 +260,9 @@ class LM_Auctions {
 	/** Featured auction: full width, date in an accent block, short description and both buttons. */
 	private static function featured_card( int $id ): string {
 		$s = self::dt( (string) self::m( $id, 'lm_start' ) );
-		$url = (string) self::m( $id, 'lm_url' );
 		$link = get_permalink( $id );
 		$about = wp_trim_words( wp_strip_all_tags( (string) get_post_field( 'post_content', $id ) ), 28, '…' );
-		return '<article class="lmf-fauction">' .
+		return '<article class="lmf-fauction"' . self::live_attr( $id ) . '>' .
 			'<a class="lmf-fauction-date" href="' . esc_url( $link ) . '"' . self::track( $id, 'auction_open', 'featured' ) . '>' . ( $s ? '<span>' . esc_html( $s->format( 'M' ) ) . '</span><strong>' . esc_html( $s->format( 'j' ) ) . '</strong><em>' . esc_html( $s->format( 'l' ) ) . '</em>' : '' ) . '</a>' .
 			'<div class="lmf-fauction-body">' .
 			'<span class="lmf-fauction-tag">Featured auction</span>' .
@@ -243,7 +271,7 @@ class LM_Auctions {
 			'<p class="lmf-meta">' . esc_html( implode( ' · ', array_filter( [ self::auctioneer( $id ), self::place( $id ), self::time_text( $id ) ] ) ) ) . '</p>' .
 			( $about ? '<p class="lmf-fauction-about">' . esc_html( $about ) . '</p>' : '' ) .
 			'</div><div class="lmf-fauction-actions">' .
-			( $url ? '<a class="lmf-btn" href="' . esc_url( $url ) . '" target="_blank" rel="noopener"' . self::track( $id, 'auction_catalog', 'featured' ) . '>View catalog &amp; bidding ↗</a>' : '' ) .
+			self::main_button( $id, 'featured' ) .
 			'<a class="lmf-btn ghost" href="' . esc_url( $link ) . '"' . self::track( $id, 'auction_open', 'featured' ) . '>Auction details</a>' .
 			'</div></article>';
 	}
@@ -337,10 +365,10 @@ class LM_Auctions {
 		$rows = array_filter( [ 'When' => self::when( $id ), 'Type' => self::type_label( $id ), 'Where' => $addr, 'Auctioneer' => self::auctioneer( $id ) ] );
 		$out = '';
 		foreach ( $rows as $k => $v ) $out .= '<div><dt>' . esc_html( $k ) . '</dt><dd>' . esc_html( $v ) . '</dd></div>';
-		$url = (string) self::m( $id, 'lm_url' );
-		return ( self::ended( $id ) ? '<p class="lmf-ended">This auction has ended. <a href="' . esc_url( get_post_type_archive_link( self::PT ) ) . '">See upcoming auctions</a></p>' : '' ) .
+		$live = (string) self::m( $id, 'lm_live' );
+		return ( self::ended( $id ) && ! $live ? '<p class="lmf-ended">This auction has ended. <a href="' . esc_url( get_post_type_archive_link( self::PT ) ) . '">See upcoming auctions</a></p>' : '' ) .
 			'<dl class="lmf-facts">' . $out . '</dl>' .
-			( $url ? '<a class="lmf-btn" href="' . esc_url( $url ) . '" target="_blank" rel="noopener"' . self::track( $id, 'auction_catalog', 'auction_page' ) . '>View catalog &amp; bidding ↗</a>' : '' );
+			( $live ? LM_Live::shortcode() : self::main_button( $id, 'auction_page' ) );
 	}
 
 	/** On an auction page, tell GTM which auction it is (event hl_auction_view → GA4 view_auction). */
@@ -362,6 +390,9 @@ class LM_Auctions {
 		$type = (string) get_post_meta( $post->ID, 'lm_type', true );
 		$opts = '';
 		foreach ( self::TYPES as $k => $label ) $opts .= '<option value="' . esc_attr( $k ) . '"' . selected( $type, $k, false ) . '>' . esc_html( $label ) . '</option>';
+		if ( $live = (string) get_post_meta( $post->ID, 'lm_live', true ) ) {
+			echo '<p class="notice notice-info inline" style="padding:8px">Heavy Listing Live auction, managed in Yard: <a href="' . esc_url( LM_Live::url() . '/a/' . $live ) . '" target="_blank" rel="noopener">' . esc_html( $live ) . '</a>. Changes made here are overwritten by Yard.</p>';
+		}
 		$f = fn( $k, $label, $type = 'text', $extra = '' ) => '<p><label><strong>' . esc_html( $label ) . '</strong><br><input type="' . $type . '" name="' . $k . '" value="' . $v( $k ) . '" class="widefat" ' . $extra . '></label></p>';
 		echo $f( 'lm_start', 'Start (local time, ET)', 'datetime-local' ) . $f( 'lm_end', 'End (optional)', 'datetime-local' ) . // phpcs:ignore WordPress.Security.EscapeOutput
 			'<p><label><strong>Type</strong><br><select name="lm_type" class="widefat">' . $opts . '</select></label></p>' .

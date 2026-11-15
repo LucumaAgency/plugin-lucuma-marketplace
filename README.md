@@ -120,6 +120,19 @@ auctions, prices, buying-guides, selling.
 Importador CSV/Sandhills · tabla propia de búsqueda + buscador ·
 contactos y medición · páginas SEO de categoría/marca/modelo · widget para la web de Kurtz.
 
+## 0.20.0: remates en vivo de Heavy Listing Live (15-nov-2026)
+
+- Los remates que un dealer arma en Yard llegan solos al calendario: `POST lucuma-mkt/v1/sync/auction` (firmado como el resto
+  de la sincronización) crea o actualiza la ficha `lm_auction` a nombre del dealer, por `lm_live_id`. Sin fecha queda en
+  borrador; borrado en Yard pasa a borrador. Metas nuevas: `lm_live` (slug en Live), `lm_live_id`, `lm_image` (foto de Yard
+  cuando no hay destacada).
+- En la ficha, `[lm_auction_facts]` muestra el remate en vivo para mirar y pujar sin salir del sitio (`LM_Live`, shortcode
+  `[lm_live]`): iframe de `live.heavylisting.com/a/<slug>?embed=1` (mismo sitio, así la sesión del comprador funciona sin
+  cookies de terceros), con altura automática. El botón de las tarjetas pasa a "Watch & bid live" (a la misma ficha).
+- "Live now": las tarjetas con `data-lm-live` se marcan solas con la lista pública de Live.
+- GTM: `live_view`, `bidder_register` y `bid_placed` (con `value` en USD), con `auction_id` y `auction_name` de la ficha.
+- Dirección de Live: constante `LM_LIVE_URL` o filtro `lm_live_url` (por defecto `https://live.heavylisting.com`).
+
 ## 0.19.0: sincronización desde Heavy Listing Yard (14-nov-2026)
 - `includes/class-lm-sync.php`: rutas firmadas `lucuma-mkt/v1/sync/{ping,equipment,dealer}` (HMAC-SHA256 con la opción `lm_yard_secret`) y `sync/secret` (administradores). Yard manda; la ficha se guarda con la lógica del panel del dealer.
 - Las fichas existentes se reconocen sin duplicar; conservan su fecha. Borrar en Yard = borrador. Los dealers con `lm_yard_managed` ven el panel `/dealer/` en solo lectura.

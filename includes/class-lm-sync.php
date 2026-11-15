@@ -6,6 +6,7 @@
  * que Yard le manda. Rutas (todas firmadas, sin usuario de WordPress):
  *   POST lucuma-mkt/v1/sync/equipment   crear o actualizar una ficha (o pasarla a borrador)
  *   POST lucuma-mkt/v1/sync/dealer      perfil público del dealer (user meta)
+ *   POST lucuma-mkt/v1/sync/auction     remate de Heavy Listing Live en el calendario (lm_auction con lm_live)
  *   GET  lucuma-mkt/v1/sync/ping        comprobar firma y versión
  * y una de configuración, con usuario administrador:
  *   POST lucuma-mkt/v1/sync/secret      guardar el secreto compartido (opción lm_yard_secret)
@@ -37,6 +38,7 @@ class LM_Sync {
 		$signed = [ __CLASS__, 'verify' ];
 		register_rest_route( self::NS, '/sync/ping', [ 'methods' => 'GET', 'permission_callback' => $signed, 'callback' => fn() => [ 'ok' => true, 'version' => LM_VERSION ] ] );
 		register_rest_route( self::NS, '/sync/equipment', [ 'methods' => 'POST', 'permission_callback' => $signed, 'callback' => [ __CLASS__, 'equipment' ] ] );
+		register_rest_route( self::NS, '/sync/auction', [ 'methods' => 'POST', 'permission_callback' => $signed, 'callback' => [ __CLASS__, 'auction' ] ] );
 		register_rest_route( self::NS, '/sync/dealer', [ 'methods' => 'POST', 'permission_callback' => $signed, 'callback' => [ __CLASS__, 'dealer' ] ] );
 		register_rest_route( self::NS, '/sync/secret', [
 			'methods' => 'POST', 'permission_callback' => fn() => current_user_can( 'manage_options' ),
@@ -261,6 +263,49 @@ class LM_Sync {
 			return new WP_Error( 'yard_managed', 'Your inventory is managed in Heavy Listing Yard: https://yard.heavylisting.com', [ 'status' => 403 ] );
 		}
 		return $result;
+	}
+
+	/* ------------------------------------------------------------------ remates en vivo */
+
+	/**
+	 * Remate de Heavy Listing Live (armado en Yard). Busca la ficha por lm_live_id. status: publish (con fecha),
+	 * draft (sin fecha todavía) o trash (borrado en Yard). La ficha queda a nombre del dealer.
+	 */
+	public static function auction( WP_REST_Request $req ) {
+		$b = (array) $req->get_json_params();
+		$live_id = sanitize_key( (string) ( $b['live_id'] ?? '' ) );
+		$slug = sanitize_title( (string) ( $b['live_slug'] ?? '' ) );
+		$author = (int) ( $b['wp_user_id'] ?? 0 );
+		if ( $live_id === '' || $slug === '' ) return new WP_Error( 'live_id', 'Missing live_id or live_slug.', [ 'status' => 400 ] );
+		if ( ! $author || ! LM_Dealers::is_dealer( $author ) ) return new WP_Error( 'dealer', 'wp_user_id is not a dealer on this site.', [ 'status' => 400 ] );
+		$found = get_posts( [ 'post_type' => LM_Auctions::PT, 'post_status' => 'any', 'meta_key' => 'lm_live_id', 'meta_value' => $live_id, 'fields' => 'ids', 'numberposts' => 1 ] );
+		$id = $found ? (int) $found[0] : 0;
+		$status = in_array( $b['status'] ?? '', [ 'publish', 'draft', 'trash' ], true ) ? $b['status'] : 'draft';
+		if ( $status === 'trash' ) {
+			if ( $id ) wp_update_post( [ 'ID' => $id, 'post_status' => 'draft' ] );
+			return [ 'id' => $id ?: null, 'status' => 'draft', 'link' => null ];
+		}
+		$start = (string) ( $b['start'] ?? '' );
+		if ( $start !== '' && ! LM_Auctions::dt( $start ) ) return new WP_Error( 'start', 'start must be YYYY-MM-DDTHH:MM (site time).', [ 'status' => 400 ] );
+		if ( $start === '' ) $status = 'draft'; // sin fecha no entra al calendario
+		$post = [
+			'post_type' => LM_Auctions::PT, 'post_status' => $status, 'post_author' => $author,
+			'post_title' => sanitize_text_field( (string) ( $b['title'] ?? 'Live auction' ) ),
+			'post_content' => wp_kses_post( (string) ( $b['description'] ?? '' ) ),
+		];
+		if ( $id ) { $post['ID'] = $id; $id = wp_update_post( $post, true ); }
+		else $id = wp_insert_post( $post, true );
+		if ( is_wp_error( $id ) ) return $id;
+		$meta = [
+			'lm_live' => $slug, 'lm_live_id' => $live_id, 'lm_start' => $start, 'lm_end' => '',
+			'lm_type' => isset( LM_Auctions::TYPES[ $b['type'] ?? '' ] ) ? $b['type'] : 'live-online-phone',
+			'lm_auctioneer' => '', 'lm_address' => sanitize_text_field( (string) ( $b['address'] ?? '' ) ),
+			'lm_city' => sanitize_text_field( (string) ( $b['city'] ?? '' ) ), 'lm_state' => strtoupper( substr( sanitize_text_field( (string) ( $b['state'] ?? '' ) ), 0, 2 ) ),
+			'lm_zip' => sanitize_text_field( (string) ( $b['zip'] ?? '' ) ), 'lm_url' => esc_url_raw( LM_Live::url() . '/a/' . $slug ),
+			'lm_image' => esc_url_raw( (string) ( $b['image'] ?? '' ) ),
+		];
+		foreach ( $meta as $k => $v ) update_post_meta( $id, $k, $v );
+		return [ 'id' => $id, 'status' => get_post_status( $id ), 'link' => get_post_status( $id ) === 'publish' ? get_permalink( $id ) : null ];
 	}
 }
 
