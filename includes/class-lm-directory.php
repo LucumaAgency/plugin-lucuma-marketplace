@@ -162,7 +162,9 @@ class LM_Directory {
 		$dir = array_slice( self::entries_for( $t ), 0, 6 );
 		if ( ! $members && ! $dir ) return '';
 		$name = wp_specialchars_decode( $t->name, ENT_QUOTES );
-		$out = '<h2>' . esc_html( $name ) . ' dealers in Pennsylvania</h2>';
+		// "Skid Steers" → "Skid Steer dealers", "Compactors & Rollers" → "Compactor & Roller dealers"
+		$single = preg_replace( '/(?<!s)s\b/', '', $name );
+		$out = '<h2>' . esc_html( $single ) . ' dealers in Pennsylvania</h2>';
 		if ( $members ) {
 			$out .= '<ul class="lmf-catdealers">';
 			foreach ( $members as $u => $n ) {
