@@ -291,7 +291,8 @@ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded'
 			'<span class="lmf-kicker">Sold by</span><strong class="lmf-company">' . esc_html( $company ) . '</strong>' .
 			( $place ? '<span class="lmf-meta">' . esc_html( $place ) . '</span>' : '' ) .
 			( $phone ? '<a class="lmf-btn" href="tel:' . esc_attr( preg_replace( '/[^0-9+]/', '', $phone ) ) . '" data-lm-event="call">Call ' . esc_html( $phone ) . '</a>' : '' ) .
-			'<a class="lmf-btn ghost" href="mailto:' . esc_attr( $email ) . '?subject=' . $subject . '" data-lm-event="email">Email dealer</a>' .
+			// Yard units: the inquiry form (E3) replaces the mailto button; it keeps a mailto link inside.
+			( ( $form = LM_Inquiry::form( $p, $company, $email ) ) ?: '<a class="lmf-btn ghost" href="mailto:' . esc_attr( $email ) . '?subject=' . $subject . '" data-lm-event="email">Email dealer</a>' ) .
 			'<a class="lmf-more" href="' . esc_url( LM_Dealers::url( $u ) ) . '">More equipment from this dealer →</a>' . self::source( $p->ID, $company ) . '</div>';
 	}
 

@@ -292,3 +292,19 @@ body.lm-live-auction main .brx-grid:has(.lmf-facts) > :has(.lmf-facts) { order: 
 .lmf-catdealers { margin: 8px 0 16px; padding-left: 20px; }
 .lmf-catdealers li { margin: 4px 0; }
 @media (max-width: 767px) { .lmf-ddirs { grid-template-columns: 1fr; } }
+
+/* Inquiry form (Yard E3, 0.23.0) */
+.lmf-inq { margin: 0; }
+.lmf-inq > summary { list-style: none; cursor: pointer; text-align: center; }
+.lmf-inq > summary::-webkit-details-marker { display: none; }
+.lmf-inq[open] > summary { margin-bottom: 12px; }
+.lmf-inq-form { display: grid; gap: 10px; text-align: left; }
+.lmf-inq-form label { display: grid; gap: 4px; font-size: 14px; font-weight: 600; color: var(--lmf-text); }
+.lmf-inq-form label span { font-weight: 400; color: var(--lmf-muted); }
+.lmf-inq-form input, .lmf-inq-form textarea { width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid var(--lmf-line); border-radius: 8px; font: inherit; font-weight: 400; background: #fff; color: var(--lmf-text); }
+.lmf-inq-form input:focus, .lmf-inq-form textarea:focus { outline: 2px solid var(--lmf-accent); outline-offset: 1px; }
+.lmf-inq-form .lmf-inq-hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+.lmf-inq-note { margin: 0; font-size: 12px; line-height: 1.5; color: var(--lmf-muted); }
+.lmf-inq-msg { margin: 0; font-size: 14px; }
+.lmf-inq-msg:empty { display: none; }
+.lmf-inq-done { margin: 0; padding: 12px; border-radius: 8px; background: var(--lmf-soft); }

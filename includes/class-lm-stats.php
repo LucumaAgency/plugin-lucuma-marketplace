@@ -11,7 +11,7 @@ defined( 'ABSPATH' ) || exit;
 
 class LM_Stats {
 	const DB_VERSION = '1';
-	const KINDS = [ 'view', 'call', 'email', 'website', 'catalog' ];
+	const KINDS = [ 'view', 'call', 'email', 'website', 'catalog', 'inquiry' ]; // inquiry: counted by LM_Inquiry on the server
 	// data-lm-event values already used for GTM → kind stored here.
 	const EVENTS = [ 'call' => 'call', 'email' => 'email', 'dealer_website' => 'website', 'source' => 'website', 'auction_catalog' => 'catalog' ];
 

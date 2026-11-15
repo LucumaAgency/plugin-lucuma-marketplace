@@ -192,3 +192,11 @@ JSON-LD en archivos de categoría: BreadcrumbList siempre; ItemList y FAQPage en
 - JSON-LD ItemList en /dealers/.
 - Carga: `seo/dealers/cargar.py [--aplicar]`. Si un dealer se vuelve cliente: `lm_user` = id de su usuario y su tarjeta deja de salir.
 - Arreglos de rematadores: título sin "Auction Auction"; slug desconocido de /auctioneers/ ya no pinta el índice en el 404.
+
+## Consultas a Yard (0.23.0, Yard E3)
+
+- `LM_Inquiry`: formulario "Message the dealer" en la caja del dealer, solo en fichas con `lm_yard_id` y con el secreto de Yard puesto (reemplaza el botón mailto; deja un enlace mailto adentro).
+- Tabla `wp_lm_inquiries`; cada consulta suma `inquiry` en `wp_lm_stats` y se manda a Yard (`<lm_yard_url>/api/v1/hooks/wp/inquiry`, HMAC `wp-hook.<ts>.<cuerpo>`). Opción `lm_yard_url` (por defecto https://yard.heavylisting.com).
+- Rutas firmadas para Yard: `GET sync/inquiries`, `POST sync/inquiries/ack`, `GET sync/stats?since=`.
+- Evento GTM `inquiry_submit` (dataLayer) al enviar; `inquiry_open` al abrir el formulario.
+- Borrado diario (wp-cron `lm_inquiries_purge`) de las consultas que Yard ya tiene hace más de 30 días.
