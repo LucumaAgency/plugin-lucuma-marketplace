@@ -275,3 +275,20 @@ body.lm-live-auction main .brx-grid:has(.lmf-facts) > :has(.lmf-facts) { order: 
 .lmf-live-badge::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #fff; animation: lmf-pulse 1.2s infinite; }
 @keyframes lmf-pulse { 50% { opacity: .25; } }
 .lmf-auction.is-live, .lmf-fauction.is-live { box-shadow: inset 0 0 0 2px #C2261D; }
+
+/* PA dealer directory (0.22.0) */
+.lmf-ddir-wrap { font-family: var(--lm-font, inherit); color: var(--lmf-text); }
+.lmf-ddir-nav { margin: 0 0 8px; }
+.lmf-ddir-region { font-size: 22px; margin: 36px 0 14px; }
+.lmf-ddirs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.lmf-ddir { display: grid; gap: 4px; align-content: start; padding: 18px; background: #fff; border: 1px solid var(--lmf-line); border-radius: var(--lmf-r); scroll-margin-top: 90px; }
+.lmf-ddir-name { font-size: 17px; }
+.lmf-ddir-line { margin: 6px 0 2px; font-size: 15px; line-height: 1.5; }
+.lmf-ddir-actions { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 8px; font-weight: 600; font-size: 15px; }
+.lmf-ddir-actions a { color: var(--lmf-text); text-decoration: underline; text-underline-offset: 3px; }
+.lmf-ddir-claim { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--lmf-line); font-size: 13px; color: var(--lmf-muted); text-decoration: none; }
+.lmf-ddir-claim:hover { color: var(--lmf-text); }
+.lmf-ddir-note { margin-top: 28px; font-size: 14px; color: var(--lmf-muted); }
+.lmf-catdealers { margin: 8px 0 16px; padding-left: 20px; }
+.lmf-catdealers li { margin: 4px 0; }
+@media (max-width: 767px) { .lmf-ddirs { grid-template-columns: 1fr; } }

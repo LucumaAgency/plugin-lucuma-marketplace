@@ -234,6 +234,7 @@ class LM_Auctioneers {
 
 	public static function shortcode() {
 		if ( $t = self::current() ) return self::profile( $t );
+		if ( (string) get_query_var( self::QV ) !== '' ) return ''; // unknown slug: the 404 shows nothing of the index
 		return self::index();
 	}
 
@@ -322,7 +323,7 @@ class LM_Auctioneers {
 	public static function seo_title( $v ) {
 		if ( $t = self::current() ) {
 			$custom = self::meta( $t, 'lm_seo_title' );
-			return ( $custom !== '' ? $custom : self::name( $t ) . ' Auction Schedule: Upcoming Equipment Auctions' ) . ' | Heavy Listing';
+			return ( $custom !== '' ? $custom : preg_replace( '/\s+Auctions?$/i', '', self::name( $t ) ) . ' Auction Schedule: Upcoming Equipment Auctions' ) . ' | Heavy Listing';
 		}
 		if ( self::is_index() ) {
 			$where = LM_Auctions::states_label();

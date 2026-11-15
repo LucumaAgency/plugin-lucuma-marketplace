@@ -183,3 +183,12 @@ JSON-LD en archivos de categoría: BreadcrumbList siempre; ItemList y FAQPage en
   2 remates o más, o con `lm_about`; si no, noindex, follow.
 - En la ficha del remate el dato "Auctioneer" enlaza a su página; el título de `/auctions/` enlaza a `/auctioneers/`.
 - `{price_range}` con un solo precio muestra "$28,500" (antes "$28,500 to $28,500").
+
+## Directorio de dealers PA (0.22.0)
+
+- CPT oculto `lm_dir_dealer` (REST `/wp/v2/directory-dealers`): dealers que NO están en Heavy Listing, con datos públicos de su propio sitio. Sin página propia.
+- `[lm_dealer_directory]` en /dealers/ (debajo de `[lm_dealers]`): tarjetas por región (Statewide primero), enlaces nofollow, "Claim this listing" → /how-it-works/#dealers. Eventos GTM: directory_website, directory_inventory, directory_call, directory_claim.
+- En cada categoría (`LM_Landing::category_content`): "<Categoría> dealers in Pennsylvania" = miembros con stock en esa categoría + dealers del directorio con ese tipo (lm_types, incluye subcategorías).
+- JSON-LD ItemList en /dealers/.
+- Carga: `seo/dealers/cargar.py [--aplicar]`. Si un dealer se vuelve cliente: `lm_user` = id de su usuario y su tarjeta deja de salir.
+- Arreglos de rematadores: título sin "Auction Auction"; slug desconocido de /auctioneers/ ya no pinta el índice en el 404.

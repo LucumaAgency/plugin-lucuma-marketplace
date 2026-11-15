@@ -166,8 +166,9 @@ class LM_Landing {
 		if ( ! $t || ! self::clean_view() || LM_Combo::current() ) return '';
 		$body = self::meta( $t, 'lm_body' );
 		$faq = self::faq( $t );
-		if ( ! $body && ! $faq ) return '';
-		$out = $body ? self::fill( $body, $t ) : '';
+		$dealers = LM_Directory::for_category( $t ); // "<Category> dealers in Pennsylvania" (0.22.0)
+		if ( ! $body && ! $faq && ! $dealers ) return '';
+		$out = ( $body ? self::fill( $body, $t ) : '' ) . $dealers;
 		if ( $faq ) {
 			$out .= '<h2>Frequently asked questions</h2><div class="lmf-faq">';
 			foreach ( $faq as $f ) $out .= '<h3>' . esc_html( self::fill( $f['q'], $t ) ) . '</h3><p>' . self::fill( $f['a'], $t ) . '</p>';
