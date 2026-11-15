@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Lucuma Marketplace
  * Description: Heavy equipment marketplace core: equipment listings, categories, makes and models, specs per category, dealers.
- * Version: 0.20.1
+ * Version: 0.21.0
  * Author: Lucuma Agency
  * Requires at least: 6.4
  * Requires PHP: 8.1
@@ -11,7 +11,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'LM_VERSION', '0.20.1' );
+define( 'LM_VERSION', '0.21.0' );
 define( 'LM_DIR', __DIR__ );
 
 require_once LM_DIR . '/includes/class-lm-model.php';
@@ -24,6 +24,7 @@ require_once LM_DIR . '/includes/class-lm-front.php';
 require_once LM_DIR . '/includes/class-lm-import.php';
 require_once LM_DIR . '/includes/class-lm-seo.php';
 require_once LM_DIR . '/includes/class-lm-auctions.php';
+require_once LM_DIR . '/includes/class-lm-auctioneers.php';
 require_once LM_DIR . '/includes/class-lm-live.php';
 require_once LM_DIR . '/includes/class-lm-dealers.php';
 require_once LM_DIR . '/includes/class-lm-blog.php';
@@ -41,6 +42,7 @@ LM_Front::init();
 LM_Import::init();
 LM_Seo::init();
 LM_Auctions::init();
+LM_Auctioneers::init();
 LM_Live::init();
 LM_Dealers::init();
 LM_Blog::init();

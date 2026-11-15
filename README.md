@@ -165,3 +165,21 @@ El archivo de categoría es la landing (decisión en `marketplace-maquinaria/seo
 Tokens en vivo: `{count}` `{median_price}` `{price_range}` `{dealers}` (inventario no vendido de la categoría y sus hijas).
 Shortcodes: `[lm_archive_crumbs]` (categoría, marca y modelo), `[lm_category_intro]`, `[lm_category_content]` (cuerpo + FAQ). Intro y cuerpo solo en la vista limpia (página 1, sin filtros).
 JSON-LD en archivos de categoría: BreadcrumbList siempre; ItemList y FAQPage en la vista limpia.
+
+## Rematadores (0.21.0)
+`includes/class-lm-auctioneers.php`. Búsquedas "<rematador> auction" / "auction schedule" (GSC 15-nov: Shetron, Hoover/Fraley).
+- Taxonomía oculta `lm_auctioneer_org` sobre `lm_auction` (REST `/wp/v2/auctioneers`). Cada remate recibe su término
+  solo, desde `LM_Auctions::auctioneer()` (`lm_auctioneer` o la empresa del dealer autor): al guardar en el admin, al
+  crear/editar por REST (Yard, importador) y una vez por versión para todos (`lm_auctioneers_backfill`).
+- `/auctioneers/` = página "auctioneers" (Bricks `rematadores`) con `[lm_auctioneers]`: índice ordenado por próximo remate.
+  `/auctioneers/<slug>/` = la misma página con `lm_auctioneer_slug`: perfil (h1, datos, texto, próximos remates,
+  términos para compradores, remates pasados, FAQ automática + `lm_faq`). Slug desconocido → 404.
+- Rematador que es dealer (término con `lm_dealer` = id de usuario; se pone solo cuando el remate no trae `lm_auctioneer`):
+  su URL es el perfil del dealer (301).
+- Meta del término (admin por REST): `lm_website`, `lm_phone`, `lm_address`, `lm_city`, `lm_state`, `lm_zip`, `lm_about`
+  (html), `lm_terms` (html), `lm_faq`, `lm_seo_title`, `lm_seo_desc`, `lm_dealer`.
+- SEO: título "<Nombre> Auction Schedule: Upcoming Equipment Auctions", descripción con la próxima fecha, canonical
+  propio, Organization + BreadcrumbList + FAQPage, `/auctioneer-sitemap.xml` en el índice de SEOPress. Indexable con
+  2 remates o más, o con `lm_about`; si no, noindex, follow.
+- En la ficha del remate el dato "Auctioneer" enlaza a su página; el título de `/auctions/` enlaza a `/auctioneers/`.
+- `{price_range}` con un solo precio muestra "$28,500" (antes "$28,500 to $28,500").

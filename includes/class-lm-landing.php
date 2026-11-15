@@ -98,7 +98,8 @@ class LM_Landing {
 		return self::$stats[ $key ] = [
 			'{count}'        => number_format( $n ),
 			'{median_price}' => $c ? $money( $median ) : 'call for price',
-			'{price_range}'  => $c ? $money( $prices[0] ) . ' to ' . $money( $prices[ $c - 1 ] ) : 'call for price',
+			// One price only ("$28,500"), not "$28,500 to $28,500", when every listing asks the same.
+			'{price_range}'  => $c ? ( $money( $prices[0] ) === $money( $prices[ $c - 1 ] ) ? $money( $prices[0] ) : $money( $prices[0] ) . ' to ' . $money( $prices[ $c - 1 ] ) ) : 'call for price',
 			'{dealers}'      => (string) count( $dealers ),
 		];
 	}

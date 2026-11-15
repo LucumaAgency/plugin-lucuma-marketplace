@@ -13,7 +13,7 @@
  *   [lm_auction_facts]         single auction: date, type, place, auctioneer, catalog button; with Heavy Listing Live
  *                              (lm_live) the live auction itself, to watch and bid on this page (LM_Live)
  *   /auctions/YYYY-MM/         auctions of one month, past ones included (query var lm_month)
- *   [lm_auctions_title]        h1 + intro for the calendar or the month page
+ *   [lm_auctions_title]        h1 + intro for the calendar or the month page (links to /auctioneers/, LM_Auctioneers)
  *   [lm_auction_months]        month chips: this month and the next ones with auctions
  *
  * Times are the auction's local time (site timezone, America/New_York), stored as "YYYY-MM-DDTHH:MM".
@@ -298,7 +298,8 @@ class LM_Auctions {
 			$h = 'Heavy equipment auctions' . ( $where ? ' in ' . $where : '' );
 			$p = 'Upcoming construction, farm and truck auctions from dealers and auctioneers: dates, locations, auction type and catalogs. Bidding happens on each auctioneer\'s own site.';
 		}
-		return '<h1 class="lmf-h1">' . esc_html( $h ) . '</h1><p class="lmf-lead">' . esc_html( $p ) . '</p>';
+		return '<h1 class="lmf-h1">' . esc_html( $h ) . '</h1><p class="lmf-lead">' . esc_html( $p ) .
+			( $month ? '' : ' <a href="' . esc_url( home_url( '/' . LM_Auctioneers::BASE . '/' ) ) . '">Browse auctions by auctioneer</a>.' ) . '</p>';
 	}
 
 	/** Chips: All upcoming · this month · the next 3 months that have auctions. */
@@ -364,7 +365,14 @@ class LM_Auctions {
 		$addr = self::online_only( $id ) ? 'Online' : implode( ', ', array_filter( [ self::m( $id, 'lm_address' ), trim( self::place( $id ) . ' ' . self::m( $id, 'lm_zip' ) ) ] ) );
 		$rows = array_filter( [ 'When' => self::when( $id ), 'Type' => self::type_label( $id ), 'Where' => $addr, 'Auctioneer' => self::auctioneer( $id ) ] );
 		$out = '';
-		foreach ( $rows as $k => $v ) $out .= '<div><dt>' . esc_html( $k ) . '</dt><dd>' . esc_html( $v ) . '</dd></div>';
+		foreach ( $rows as $k => $v ) {
+			$dd = esc_html( $v );
+			// The auctioneer links to its page (or the dealer profile when a dealer runs the sale).
+			if ( $k === 'Auctioneer' && ( $terms = get_the_terms( $id, LM_Auctioneers::TAX ) ) && ! is_wp_error( $terms ) ) {
+				$dd = '<a href="' . esc_url( LM_Auctioneers::url( $terms[0] ) ) . '">' . $dd . '</a>';
+			}
+			$out .= '<div><dt>' . esc_html( $k ) . '</dt><dd>' . $dd . '</dd></div>';
+		}
 		$live = (string) self::m( $id, 'lm_live' );
 		return ( self::ended( $id ) && ! $live ? '<p class="lmf-ended">This auction has ended. <a href="' . esc_url( get_post_type_archive_link( self::PT ) ) . '">See upcoming auctions</a></p>' : '' ) .
 			'<dl class="lmf-facts">' . $out . '</dl>' .
