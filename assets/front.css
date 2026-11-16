@@ -76,6 +76,21 @@
 .lmf-kw { display: flex; gap: 6px; }
 .lmf-kw input { flex: 1; min-width: 0; height: 44px; padding: 0 12px; border: 1px solid var(--lmf-line); border-radius: 8px; font: inherit; }
 .lmf-kw button { height: 44px; padding: 0 14px; font-size: 14px; }
+.lmf-kw input { font-size: 16px; }
+/* Filters panel: a button + slide-in panel up to 991px; plain sidebar above. */
+.lmf-ftoggle, .lmf-fhead, .lmf-fshade { display: none; }
+@media (max-width: 991px) {
+  .lmf-ftoggle { display: flex; align-items: center; gap: 10px; width: 100%; margin-top: 8px; height: 48px; padding: 0 16px; border: 1px solid var(--lmf-line); border-radius: 8px; background: #fff; color: var(--lmf-text); font: 700 15px/1 var(--lm-font, inherit); cursor: pointer; text-align: left; }
+  .lmf-ftoggle::before { content: ""; width: 18px; height: 14px; flex: none; background: linear-gradient(currentColor, currentColor) 0 0 / 100% 2px no-repeat, linear-gradient(currentColor, currentColor) 50% 50% / 66% 2px no-repeat, linear-gradient(currentColor, currentColor) 50% 100% / 33% 2px no-repeat; }
+  .lmf-ftoggle em { margin-left: auto; font-style: normal; font-weight: 400; color: var(--lmf-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .lmf-fpanel { position: fixed; z-index: 10001; top: 0; bottom: 0; left: 0; width: 340px; max-width: 88%; overflow-y: auto; overscroll-behavior: contain; padding: 0 20px 32px; background: #fff; box-shadow: 0 10px 40px rgba(0,0,0,.18); transform: translateX(-105%); transition: transform .22s ease; visibility: hidden; }
+  .lmf-filters.is-open .lmf-fpanel { transform: none; visibility: visible; }
+  .lmf-fshade:not([hidden]) { display: block; position: fixed; inset: 0; z-index: 10000; background: rgba(15,20,30,.45); }
+  .lmf-fhead { display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 1; margin: 0 -20px; padding: 0 8px 0 20px; height: 60px; background: #fff; border-bottom: 1px solid var(--lmf-line); font-size: 18px; }
+  .lmf-fclose { width: 44px; height: 44px; border: 0; background: none; font-size: 30px; line-height: 1; color: var(--lmf-text); cursor: pointer; }
+  .lmf-fpanel .lmf-list a { padding: 11px 0; font-size: 16px; }
+  html.lmf-noscroll, html.lmf-noscroll body { overflow: hidden; }
+}
 
 /* single */
 .lmf-crumbs { font-size: 14px; color: var(--lmf-muted); }
@@ -301,10 +316,24 @@ body.lm-live-auction main .brx-grid:has(.lmf-facts) > :has(.lmf-facts) { order: 
 .lmf-inq-form { display: grid; gap: 10px; text-align: left; }
 .lmf-inq-form label { display: grid; gap: 4px; font-size: 14px; font-weight: 600; color: var(--lmf-text); }
 .lmf-inq-form label span { font-weight: 400; color: var(--lmf-muted); }
-.lmf-inq-form input, .lmf-inq-form textarea { width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid var(--lmf-line); border-radius: 8px; font: inherit; font-weight: 400; background: #fff; color: var(--lmf-text); }
+.lmf-inq-form input, .lmf-inq-form textarea { width: 100%; box-sizing: border-box; padding: 11px 12px; border: 1px solid var(--lmf-line); border-radius: 8px; font: inherit; font-weight: 400; background: #fff; color: var(--lmf-text); }
+.lmf-inq-form input, .lmf-inq-form textarea { font-size: 16px; } /* 16px: iOS zooms into smaller fields */
+.lmf-inq { scroll-margin-top: 80px; }
 .lmf-inq-form input:focus, .lmf-inq-form textarea:focus { outline: 2px solid var(--lmf-accent); outline-offset: 1px; }
 .lmf-inq-form .lmf-inq-hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
 .lmf-inq-note { margin: 0; font-size: 12px; line-height: 1.5; color: var(--lmf-muted); }
 .lmf-inq-msg { margin: 0; font-size: 14px; }
 .lmf-inq-msg:empty { display: none; }
 .lmf-inq-done { margin: 0; padding: 12px; border-radius: 8px; background: var(--lmf-soft); }
+
+/* Contact bar on the single listing (up to 991px, after the dealer box scrolls away) */
+.lmf-cbar { display: none; }
+@media (max-width: 991px) {
+  .lmf-cbar { display: block; position: fixed; z-index: 998; left: 0; right: 0; bottom: 0; padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); background: #fff; border-top: 1px solid var(--lmf-line); box-shadow: 0 -6px 24px rgba(0,0,0,.08); transform: translateY(110%); transition: transform .2s ease; font-family: var(--lm-font, inherit); }
+  .lmf-cbar.is-on { transform: none; }
+  .lmf-cbar-in { display: flex; align-items: center; gap: 8px; max-width: 720px; margin: 0 auto; }
+  .lmf-cbar-price { margin-right: auto; font-size: 18px; font-weight: 800; color: var(--lmf-text); white-space: nowrap; }
+  .lmf-cbar .lmf-btn { height: 48px; padding: 0 20px; font-size: 16px; }
+  html.lmf-has-cbar body { padding-bottom: 76px; }
+}
+@media (max-width: 360px) { .lmf-cbar-price { font-size: 16px; } .lmf-cbar .lmf-btn { padding: 0 14px; } }

@@ -187,7 +187,15 @@ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded'
 	public static function filters() {
 		$cur_cat = is_tax( LM_Model::CATEGORY ) ? get_queried_object()->slug : ( isset( $_GET['eqcat'] ) ? sanitize_title( wp_unslash( $_GET['eqcat'] ) ) : '' );
 		$cur_make = is_tax( LM_Model::MAKE ) ? get_queried_object()->slug : ( isset( $_GET['make'] ) ? sanitize_title( wp_unslash( $_GET['make'] ) ) : '' );
-		$html = '<form class="lmf-kw" action="' . self::archive_url() . '" method="get"><input type="search" name="q" value="' . esc_attr( isset( $_GET['q'] ) ? sanitize_text_field( wp_unslash( $_GET['q'] ) ) : '' ) . '" placeholder="Keyword"><button type="submit">Go</button></form>';
+		$kw = '<form class="lmf-kw" action="' . self::archive_url() . '" method="get"><input type="search" name="q" value="' . esc_attr( isset( $_GET['q'] ) ? sanitize_text_field( wp_unslash( $_GET['q'] ) ) : '' ) . '" placeholder="Keyword" aria-label="Keyword"><button type="submit">Go</button></form>';
+		// Up to 991px the category and make lists live in a panel opened by a "Filters" button, so the machines come first.
+		$active = array_filter( [
+			$cur_cat ? ( ( $t = get_term_by( 'slug', $cur_cat, LM_Model::CATEGORY ) ) ? wp_specialchars_decode( $t->name ) : '' ) : '',
+			( $c = LM_Combo::current() ) ? wp_specialchars_decode( $c['make']->name ) : ( $cur_make ? ( ( $t = get_term_by( 'slug', $cur_make, LM_Model::MAKE ) ) ? wp_specialchars_decode( $t->name ) : '' ) : '' ),
+		] );
+		$toggle = '<button type="button" class="lmf-ftoggle" aria-expanded="false" aria-controls="lmf-fpanel"><span>Filters</span>' .
+			( $active ? '<em>' . esc_html( implode( ' · ', $active ) ) . '</em>' : '<em>Category, make</em>' ) . '</button>';
+		$html = '<div class="lmf-fhead"><strong>Filters</strong><button type="button" class="lmf-fclose" aria-label="Close filters">×</button></div>';
 		$html .= '<h4>Category</h4><ul class="lmf-list">';
 		foreach ( get_terms( [ 'taxonomy' => LM_Model::CATEGORY, 'parent' => 0, 'hide_empty' => true, 'orderby' => 'name' ] ) as $c ) {
 			$html .= '<li><a' . ( $cur_cat === $c->slug ? ' class="on"' : '' ) . ' href="' . esc_url( get_term_link( $c ) ) . '">' . esc_html( wp_specialchars_decode( $c->name ) ) . '</a><ul>';
@@ -207,12 +215,20 @@ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded'
 				$on = $mk && $mk['make']->term_id === $m->term_id;
 				$html .= '<li><a' . ( $on ? ' class="on"' : '' ) . ' href="' . esc_url( $on ? get_term_link( $in_cat ) : LM_Combo::url( $in_cat, $m ) ) . '">' . esc_html( wp_specialchars_decode( $m->name ) ) . ' <span>' . (int) $counts[ $m->term_id ] . '</span></a></li>';
 			}
-			return '<aside class="lmf-filters">' . $html . '</ul></aside>';
+			return self::filters_wrap( $kw, $toggle, $html );
 		}
 		foreach ( get_terms( [ 'taxonomy' => LM_Model::MAKE, 'hide_empty' => true, 'orderby' => 'name' ] ) as $m ) {
 			$html .= '<li><a' . ( $cur_make === $m->slug ? ' class="on"' : '' ) . ' href="' . esc_url( get_term_link( $m ) ) . '">' . esc_html( wp_specialchars_decode( $m->name ) ) . ' <span>' . (int) $m->count . '</span></a></li>';
 		}
-		return '<aside class="lmf-filters">' . $html . '</ul></aside>';
+		return self::filters_wrap( $kw, $toggle, $html );
+	}
+
+	private static function filters_wrap( string $kw, string $toggle, string $lists ): string {
+		return '<aside class="lmf-filters">' . $kw . $toggle . '<div class="lmf-fpanel" id="lmf-fpanel">' . $lists . '</ul></div><div class="lmf-fshade" hidden></div></aside>' .
+			'<script>(function(){var a=document.currentScript.previousElementSibling,t=a.querySelector(".lmf-ftoggle"),s=a.querySelector(".lmf-fshade");' .
+			'function set(o){a.classList.toggle("is-open",o);t.setAttribute("aria-expanded",o?"true":"false");s.hidden=!o;document.documentElement.classList.toggle("lmf-noscroll",o);}' .
+			't.addEventListener("click",function(){set(true);});a.querySelector(".lmf-fclose").addEventListener("click",function(){set(false);});s.addEventListener("click",function(){set(false);});' .
+			'document.addEventListener("keydown",function(e){if(e.key==="Escape")set(false);});})();</script>';
 	}
 
 	public static function archive_title() {
@@ -287,13 +303,33 @@ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded'
 		$place = implode( ', ', array_filter( [ $m( 'lm_city' ), $m( 'lm_state' ) ] ) );
 		$subject = rawurlencode( 'Inquiry: ' . get_the_title( $p ) . ( self::m( $p->ID, 'lm_stock_number' ) ? ' (Stock #' . self::m( $p->ID, 'lm_stock_number' ) . ')' : '' ) );
 		$email = get_the_author_meta( 'user_email', $u );
+		$tel = $phone ? 'tel:' . preg_replace( '/[^0-9+]/', '', $phone ) : '';
+		$mailto = 'mailto:' . $email . '?subject=' . $subject;
+		$form = LM_Inquiry::form( $p, $company, $email );
 		return '<div class="lmf-dealer">' . ( $logo ? wp_get_attachment_image( $logo, 'medium', false, [ 'class' => 'lmf-logo' ] ) : '' ) .
 			'<span class="lmf-kicker">Sold by</span><strong class="lmf-company">' . esc_html( $company ) . '</strong>' .
 			( $place ? '<span class="lmf-meta">' . esc_html( $place ) . '</span>' : '' ) .
-			( $phone ? '<a class="lmf-btn" href="tel:' . esc_attr( preg_replace( '/[^0-9+]/', '', $phone ) ) . '" data-lm-event="call">Call ' . esc_html( $phone ) . '</a>' : '' ) .
+			( $phone ? '<a class="lmf-btn" href="' . esc_attr( $tel ) . '" data-lm-event="call">Call ' . esc_html( $phone ) . '</a>' : '' ) .
 			// Yard units: the inquiry form (E3) replaces the mailto button; it keeps a mailto link inside.
-			( ( $form = LM_Inquiry::form( $p, $company, $email ) ) ?: '<a class="lmf-btn ghost" href="mailto:' . esc_attr( $email ) . '?subject=' . $subject . '" data-lm-event="email">Email dealer</a>' ) .
-			'<a class="lmf-more" href="' . esc_url( LM_Dealers::url( $u ) ) . '">More equipment from this dealer →</a>' . self::source( $p->ID, $company ) . '</div>';
+			( $form ?: '<a class="lmf-btn ghost" href="' . esc_attr( $mailto ) . '" data-lm-event="email">Email dealer</a>' ) .
+			'<a class="lmf-more" href="' . esc_url( LM_Dealers::url( $u ) ) . '">More equipment from this dealer →</a>' . self::source( $p->ID, $company ) . '</div>' .
+			self::contact_bar( $p->ID, $tel, $form ? '' : $mailto );
+	}
+
+	/**
+	 * Up to 991px: a bar fixed at the bottom with Call and Message/Email, shown once the dealer box has scrolled out of view.
+	 * Same data-lm-event values as the box, so GTM and the dealer stats count both.
+	 */
+	private static function contact_bar( int $id, string $tel, string $mailto ): string {
+		$second = $mailto
+			? '<a class="lmf-btn ghost" href="' . esc_attr( $mailto ) . '" data-lm-event="email">Email</a>'
+			: '<a class="lmf-btn ghost" href="#lmf-inq-' . $id . '" data-lm-event="inquiry_open" data-lmf-open>Message</a>';
+		return '<div class="lmf-cbar" aria-hidden="true"><div class="lmf-cbar-in"><span class="lmf-cbar-price">' . esc_html( self::price_text( $id ) ) . '</span>' .
+			( $tel ? '<a class="lmf-btn" href="' . esc_attr( $tel ) . '" data-lm-event="call">Call</a>' : '' ) . $second . '</div></div>' .
+			'<script>(function(){var b=document.currentScript.previousElementSibling,box=b.previousElementSibling;if(!("IntersectionObserver" in window)||!box)return;' .
+			'new IntersectionObserver(function(e){var on=!e[0].isIntersecting&&e[0].boundingClientRect.top<0;b.classList.toggle("is-on",on);b.setAttribute("aria-hidden",on?"false":"true");document.documentElement.classList.toggle("lmf-has-cbar",on);}).observe(box);' .
+			'var o=b.querySelector("[data-lmf-open]");if(o)o.addEventListener("click",function(e){var d=document.getElementById(o.getAttribute("href").slice(1));if(!d)return;e.preventDefault();d.open=true;' .
+			'd.scrollIntoView({behavior:"smooth",block:"start"});setTimeout(function(){var i=d.querySelector("input[name=name]");if(i)i.focus({preventScroll:true});},450);});})();</script>';
 	}
 
 	/** Aggregated units: say where the listing comes from and link to the original. */
