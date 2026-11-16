@@ -358,3 +358,10 @@ body.lm-live-auction main .brx-grid:has(.lmf-facts) > :has(.lmf-facts) { order: 
   .lmf-ddir-actions a { display: inline-block; padding: 10px 0; }
   .lmf-ddir-claim { display: block; padding: 12px 0 2px; }
 }
+
+/* Wide tables: hint + right-edge fade, added by a small script only when the table does not fit. */
+.lmf-thint { margin: 1.6em 0 6px; font-size: 13px; line-height: 1.4; color: var(--lmf-muted); }
+.lmf-tscroll { position: relative; margin: 0 0 1.6em; }
+.lmf-tscroll table { margin: 0 !important; }
+.lmf-tscroll::after { content: ""; position: absolute; top: 0; right: 0; bottom: 0; width: 36px; pointer-events: none; background: linear-gradient(to right, rgba(255,255,255,0), #fff); transition: opacity .2s; }
+.lmf-tscroll.at-end::after { opacity: 0; }

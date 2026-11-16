@@ -25,6 +25,22 @@ class LM_Front {
 		} );
 		add_action( 'pre_get_posts', [ __CLASS__, 'archive_query' ] );
 		add_action( 'wp_footer', [ __CLASS__, 'plan_prefill' ] );
+		add_action( 'wp_footer', [ __CLASS__, 'table_hint' ] );
+	}
+
+	/**
+	 * Wide tables in articles and category texts scroll sideways on phones. When one does not fit, add a short
+	 * "swipe" line above it and a fade on the right edge (gone once scrolled to the end), so readers know there is more.
+	 */
+	public static function table_hint() {
+		if ( is_admin() || ! ( is_singular() || is_tax() ) ) return;
+		?>
+<script>(function(){function go(){document.querySelectorAll('.lmf-prose table,.lmf-cat-body table').forEach(function(t){
+if(t.closest('.lmf-tscroll')||t.scrollWidth<=t.clientWidth+2)return;var w=document.createElement('div');w.className='lmf-tscroll';t.parentNode.insertBefore(w,t);w.appendChild(t);
+var h=document.createElement('p');h.className='lmf-thint';h.textContent='Swipe sideways to see all columns →';w.parentNode.insertBefore(h,w);
+function u(){w.classList.toggle('at-end',t.scrollLeft+t.clientWidth>=t.scrollWidth-4);}t.addEventListener('scroll',u,{passive:true});u();});}
+if(document.readyState==='complete'){go();}else{window.addEventListener('load',go);}})();</script>
+		<?php
 	}
 
 	/**

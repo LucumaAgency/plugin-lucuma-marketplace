@@ -329,7 +329,9 @@ class LM_Auctions {
 		}
 		$extra = [];
 		if ( $c = LM_Front::cities_query( $a['cities'] ) ) $extra['meta_query'] = [ 'relation' => 'AND', [ 'key' => 'lm_start', 'value' => self::now(), 'compare' => '>=' ], $c ];
-		$ids = self::by_week( array_slice( array_values( array_diff( self::upcoming( $extra ), self::$shown ) ), 0, max( 1, min( 24, (int) $a['count'] ) ) ) );
+		// On an auction page, "More upcoming auctions" must not list the auction being viewed.
+		$skip = is_singular( self::PT ) ? [ get_queried_object_id() ] : [];
+		$ids = self::by_week( array_slice( array_values( array_diff( self::upcoming( $extra ), self::$shown, $skip ) ), 0, max( 1, min( 24, (int) $a['count'] ) ) ) );
 		if ( ! $ids && $a['cities'] ) return '<div class="lmf-empty"><p>No auctions listed in this area right now. <a href="' . esc_url( get_post_type_archive_link( self::PT ) ) . '">See all upcoming auctions in Pennsylvania</a>.</p></div>';
 		return $ids ? '<div class="lmf-auctions">' . implode( '', array_map( [ __CLASS__, 'card' ], $ids ) ) . '</div>' : '';
 	}
