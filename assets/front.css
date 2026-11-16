@@ -337,3 +337,24 @@ body.lm-live-auction main .brx-grid:has(.lmf-facts) > :has(.lmf-facts) { order: 
   html.lmf-has-cbar body { padding-bottom: 76px; }
 }
 @media (max-width: 360px) { .lmf-cbar-price { font-size: 16px; } .lmf-cbar .lmf-btn { padding: 0 14px; } }
+
+/* Rails: on phones, a grid of cards, posts or chips inside an element with the class "lm-rail" (set in Bricks)
+ * becomes one horizontal row that scrolls sideways, with the next card peeking in. Keeps long pages short. */
+@media (max-width: 767px) {
+  .lm-rail .lmf-grid, .lm-rail .lmf-posts, .lm-rail .lmf-chips { display: flex; flex-wrap: nowrap; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; margin: 0 -16px; padding: 2px 16px 10px; scroll-padding-left: 16px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .lm-rail .lmf-grid::-webkit-scrollbar, .lm-rail .lmf-posts::-webkit-scrollbar, .lm-rail .lmf-chips::-webkit-scrollbar { display: none; }
+  .lm-rail .lmf-card { flex: 0 0 66%; scroll-snap-align: start; }
+  .lm-rail .lmf-card .lmf-loc { display: block; }
+  .lm-rail .lmf-post { flex: 0 0 82%; scroll-snap-align: start; }
+  .lm-rail .lmf-chip { flex: none; white-space: nowrap; }
+}
+
+/* Touch targets (up to 991px): small text links get a taller hit area without changing how they look. */
+@media (max-width: 991px) {
+  .lmf-crumbs a { display: inline-block; padding: 12px 0; }
+  .lmf-crumbs { margin: -12px 0; }
+  .lmf-more { display: inline-block; padding: 11px 0; margin: 0; }
+  .lmf-ddir-actions { gap: 0 20px; margin-top: 4px; }
+  .lmf-ddir-actions a { display: inline-block; padding: 10px 0; }
+  .lmf-ddir-claim { display: block; padding: 12px 0 2px; }
+}
