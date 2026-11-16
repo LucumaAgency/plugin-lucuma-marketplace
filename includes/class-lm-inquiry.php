@@ -60,8 +60,13 @@ class LM_Inquiry {
 		update_option( 'lm_inquiries_db', self::DB_VERSION, false );
 	}
 
+	/**
+	 * Yard units only, and never aggregated listings (lm_source_url: Old Forge, Five Star, Keystone, read from their
+	 * own websites by Yard E4). Those dealers are not on Heavy Listing: buyers keep contacting them directly.
+	 */
 	public static function enabled_for( int $post_id ): bool {
-		return (string) get_option( LM_Sync::OPTION, '' ) !== '' && (string) get_post_meta( $post_id, 'lm_yard_id', true ) !== '';
+		return (string) get_option( LM_Sync::OPTION, '' ) !== '' && (string) get_post_meta( $post_id, 'lm_yard_id', true ) !== ''
+			&& (string) get_post_meta( $post_id, 'lm_source_url', true ) === '';
 	}
 
 	private static function yard_url(): string {
