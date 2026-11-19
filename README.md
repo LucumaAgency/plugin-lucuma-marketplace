@@ -41,6 +41,15 @@ en el archivo, con filtros `?q=` `?eqcat=` `?make=` `?dealer=` y paginación), `
 `[lm_archive_title]`; en la ficha `[lm_breadcrumbs]` `[lm_price]` `[lm_gallery]` `[lm_facts]` `[lm_specs]`
 `[lm_dealer]`. Nunca usar `?cat=` (reservado por WordPress). Vendidos al final del listado.
 
+Filtros del archivo (0.29.0, 19-nov-2026). `[lm_filters]` es un solo formulario GET que envía a la URL actual
+(archivo, categoría, marca o marca × categoría): palabra clave; categorías en árbol plegable (abierto solo el
+grupo activo); precio con atajos (Under $25k … $250k+) y mínimo/máximo; año desde/hasta; horas máximas; marcas
+(las 8 con más avisos, buscador y "Show all"); estado y condición solo cuando los avisos difieren (hoy todos PA y
+usados). Parámetros: `?min_price` `?max_price` `?year_min` `?year_max` `?hours_max` `?state` `?condition` `?sort`
+(`price_asc`, `price_desc`, `year_desc`, `hours_asc`). Los enlaces de categoría y marca conservan los rangos.
+Arriba de la grilla: total, chips de filtros activos (cada uno se quita) y orden. En escritorio los select aplican
+al cambiar; en móvil, con el botón "Show results". Todo URL con parámetros sigue `noindex, follow`.
+
 ## Importador (0.5.0)
 Panel → Import (`#/import`): plantilla CSV, subir archivo, vista previa por fila (categoría y marca
 resueltas con alias; errores marcados) e importación en tandas con barra de avance. Columnas:

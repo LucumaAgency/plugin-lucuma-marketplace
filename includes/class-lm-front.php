@@ -7,7 +7,9 @@
  *   [lm_makes]                  makes with listings, as chips
  *   [lm_grid count="8"]         latest listings as cards; main="1" = the current archive (with filters
  *                               ?q= ?eqcat= ?make= ?dealer= and pagination)
- *   [lm_filters]                archive sidebar: categories and makes
+ *   [lm_filters]                archive sidebar (one GET form): keyword, category tree, price, year, hours, make,
+ *                               state/condition when listings differ; ?min_price ?max_price ?year_min ?year_max
+ *                               ?hours_max ?state ?condition ?sort (all noindex via LM_Seo::has_filters)
  *   [lm_archive_title]          heading for the current archive / filters
  *   [lm_count cities="" category=""]  number of listings (regional pages)
  *   [lm_grid cities="A, B"]     grid limited to those cities
@@ -87,7 +89,21 @@ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded'
 
 	/* ------------------------------------------------------------------ archive query */
 
-	/** Filters on the equipment archive: ?q= keyword, ?eqcat= category slug, ?make= make slug, ?dealer= user id. */
+	/** Numeric and choice filters read from the URL (shared by the query, the sidebar and the active chips). */
+	const SORTS = [ '' => 'Newest first', 'price_asc' => 'Price: low to high', 'price_desc' => 'Price: high to low', 'year_desc' => 'Year: newest', 'hours_asc' => 'Hours: lowest' ];
+
+	public static function params(): array {
+		$g = fn( $k ) => isset( $_GET[ $k ] ) ? sanitize_text_field( wp_unslash( $_GET[ $k ] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
+		$n = fn( $k ) => ( $v = preg_replace( '/[^0-9]/', '', $g( $k ) ) ) === '' ? '' : (int) $v;
+		$state = strtoupper( substr( preg_replace( '/[^A-Za-z]/', '', $g( 'state' ) ), 0, 2 ) );
+		$cond  = in_array( $g( 'condition' ), LM_Model::CONDITIONS, true ) ? $g( 'condition' ) : '';
+		$sort  = isset( self::SORTS[ $g( 'sort' ) ] ) ? $g( 'sort' ) : '';
+		return [ 'min_price' => $n( 'min_price' ), 'max_price' => $n( 'max_price' ), 'year_min' => $n( 'year_min' ), 'year_max' => $n( 'year_max' ),
+			'hours_max' => $n( 'hours_max' ), 'state' => strlen( $state ) === 2 ? $state : '', 'condition' => $cond, 'sort' => $sort ];
+	}
+
+	/** Filters on the equipment archive: ?q= keyword, ?eqcat= category slug, ?make= make slug, ?dealer= user id,
+	 *  ?min_price= ?max_price= ?year_min= ?year_max= ?hours_max= ?state= ?condition= and ?sort=. */
 	public static function archive_query( WP_Query $q ) {
 		if ( is_admin() || ! $q->is_main_query() ) return;
 		$is_ours = $q->is_post_type_archive( LM_Model::PT ) || $q->is_tax( [ LM_Model::CATEGORY, LM_Model::MAKE, LM_Model::MODEL ] );
@@ -103,9 +119,30 @@ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded'
 		if ( $kw !== '' ) $q->set( 's', $kw );
 		$dealer = isset( $_GET['dealer'] ) ? absint( $_GET['dealer'] ) : 0;
 		if ( $dealer ) $q->set( 'author', $dealer );
-		// Sold listings stay reachable but go last.
-		$q->set( 'meta_query', [ 'relation' => 'OR', 'st' => [ 'key' => 'lm_status', 'compare' => 'EXISTS' ], [ 'key' => 'lm_status', 'compare' => 'NOT EXISTS' ] ] );
-		$q->set( 'orderby', [ 'st' => 'ASC', 'date' => 'DESC' ] );
+
+		$p = self::params();
+		// Sold listings stay reachable but go last. Named clauses (st, pr, yr, hr) let us sort by them without dropping
+		// listings that lack the field; range filters, on the other hand, only keep listings that have it.
+		$mq = [ 'relation' => 'AND',
+			[ 'relation' => 'OR', 'st' => [ 'key' => 'lm_status', 'compare' => 'EXISTS' ], [ 'key' => 'lm_status', 'compare' => 'NOT EXISTS' ] ] ];
+		$sort_key = [ 'price_asc' => 'pr', 'price_desc' => 'pr', 'year_desc' => 'yr', 'hours_asc' => 'hr' ][ $p['sort'] ] ?? '';
+		$meta_of  = [ 'pr' => 'lm_price', 'yr' => 'lm_year', 'hr' => 'lm_hours' ];
+		if ( $sort_key ) $mq[] = [ 'relation' => 'OR', $sort_key => [ 'key' => $meta_of[ $sort_key ], 'compare' => 'EXISTS', 'type' => 'NUMERIC' ], [ 'key' => $meta_of[ $sort_key ], 'compare' => 'NOT EXISTS' ] ];
+		$range = function ( $key, $min, $max ) use ( &$mq ) {
+			if ( $min !== '' && $max !== '' ) $mq[] = [ 'key' => $key, 'value' => [ min( $min, $max ), max( $min, $max ) ], 'compare' => 'BETWEEN', 'type' => 'NUMERIC' ];
+			elseif ( $min !== '' ) $mq[] = [ 'key' => $key, 'value' => $min, 'compare' => '>=', 'type' => 'NUMERIC' ];
+			elseif ( $max !== '' ) $mq[] = [ 'key' => $key, 'value' => $max, 'compare' => '<=', 'type' => 'NUMERIC' ];
+		};
+		$range( 'lm_price', $p['min_price'], $p['max_price'] );
+		$range( 'lm_year', $p['year_min'], $p['year_max'] );
+		$range( 'lm_hours', '', $p['hours_max'] );
+		if ( $p['state'] ) $mq[] = [ 'key' => 'lm_state', 'value' => $p['state'] ];
+		if ( $p['condition'] ) $mq[] = [ 'key' => 'lm_condition', 'value' => $p['condition'] ];
+		$q->set( 'meta_query', $mq );
+		$order = [ 'st' => 'ASC' ];
+		if ( $sort_key ) $order[ $sort_key ] = in_array( $p['sort'], [ 'price_desc', 'year_desc' ], true ) ? 'DESC' : 'ASC';
+		$order['date'] = 'DESC';
+		$q->set( 'orderby', $order );
 	}
 
 	/* ------------------------------------------------------------------ home & archive pieces */
@@ -163,16 +200,34 @@ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded'
 			'<div class="lmf-card-foot"><span class="lmf-price">' . esc_html( self::price_text( $id ) ) . '</span><span class="lmf-loc">' . esc_html( self::location( $id ) ) . '</span></div></div></article>';
 	}
 
+	/** Above the results: count, active filters (each removable) and sort. */
+	private static function toolbar( int $found ): string {
+		$p = self::params();
+		$chips = '';
+		$active = is_author() ? [] : self::active_filters();
+		foreach ( $active as [ $label, $url ] ) $chips .= '<a class="lmf-achip" href="' . $url . '" aria-label="Remove ' . esc_attr( $label ) . '">' . esc_html( $label ) . ' <span aria-hidden="true">×</span></a>';
+		if ( count( $active ) > 1 ) $chips .= '<a class="lmf-aclear" href="' . esc_url( get_post_type_archive_link( LM_Model::PT ) ) . '">Clear all</a>';
+		$keep = '';
+		foreach ( $_GET as $k => $v ) { // phpcs:ignore WordPress.Security.NonceVerification
+			if ( $k !== 'sort' && is_string( $v ) && $v !== '' ) $keep .= '<input type="hidden" name="' . esc_attr( sanitize_key( $k ) ) . '" value="' . esc_attr( sanitize_text_field( wp_unslash( $v ) ) ) . '">';
+		}
+		$opts = '';
+		foreach ( self::SORTS as $v => $l ) $opts .= '<option value="' . esc_attr( $v ) . '"' . selected( $p['sort'], $v, false ) . '>' . esc_html( $l ) . '</option>';
+		$sort = is_author() ? '' : '<form class="lmf-sort" method="get" action="' . esc_url( self::base_url() ) . '">' . $keep . '<label><span>Sort</span><select name="sort" onchange="if(!this.value)this.disabled=true;this.form.submit()">' . $opts . '</select></label><noscript><button type="submit">Sort</button></noscript></form>';
+		return '<div class="lmf-bar"><p class="lmf-found">' . $found . ' ' . ( $found === 1 ? 'listing' : 'listings' ) . '</p>' . $sort . '</div>' .
+			( $chips ? '<div class="lmf-achips">' . $chips . '</div>' : '' );
+	}
+
 	public static function grid( $atts ) {
 		$a = shortcode_atts( [ 'count' => 8, 'main' => '0', 'category' => '', 'make' => '', 'cities' => '' ], $atts );
 		if ( $a['main'] === '1' ) {
 			global $wp_query;
 			if ( ! $wp_query->have_posts() ) {
-				return '<div class="lmf-empty"><p><strong>No equipment matches these filters.</strong></p><p><a href="' . self::archive_url() . '">See all equipment</a></p></div>';
+				return self::toolbar( 0 ) . '<div class="lmf-empty"><p><strong>No equipment matches these filters.</strong></p><p>Try removing a filter above, or <a href="' . self::archive_url() . '">see all equipment</a>.</p></div>';
 			}
 			$ids = wp_list_pluck( $wp_query->posts, 'ID' );
 			$pages = paginate_links( [ 'total' => $wp_query->max_num_pages, 'current' => max( 1, get_query_var( 'paged' ) ), 'type' => 'list', 'prev_text' => '←', 'next_text' => '→' ] );
-			return '<p class="lmf-found">' . (int) $wp_query->found_posts . ' ' . ( $wp_query->found_posts == 1 ? 'listing' : 'listings' ) . '</p>' .
+			return self::toolbar( (int) $wp_query->found_posts ) .
 				'<div class="lmf-grid">' . implode( '', array_map( [ __CLASS__, 'card' ], $ids ) ) . '</div>' . ( $pages ? '<nav class="lmf-pages">' . $pages . '</nav>' : '' );
 		}
 		$args = [ 'post_type' => LM_Model::PT, 'post_status' => 'publish', 'posts_per_page' => max( 1, min( 48, (int) $a['count'] ) ), 'fields' => 'ids', 'no_found_rows' => true ];
@@ -200,52 +255,206 @@ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded'
 		return (string) count( get_posts( $args ) );
 	}
 
-	public static function filters() {
-		$cur_cat = is_tax( LM_Model::CATEGORY ) ? get_queried_object()->slug : ( isset( $_GET['eqcat'] ) ? sanitize_title( wp_unslash( $_GET['eqcat'] ) ) : '' );
-		$cur_make = is_tax( LM_Model::MAKE ) ? get_queried_object()->slug : ( isset( $_GET['make'] ) ? sanitize_title( wp_unslash( $_GET['make'] ) ) : '' );
-		$kw = '<form class="lmf-kw" action="' . self::archive_url() . '" method="get"><input type="search" name="q" value="' . esc_attr( isset( $_GET['q'] ) ? sanitize_text_field( wp_unslash( $_GET['q'] ) ) : '' ) . '" placeholder="Keyword" aria-label="Keyword"><button type="submit">Go</button></form>';
-		// Up to 991px the category and make lists live in a panel opened by a "Filters" button, so the machines come first.
-		$active = array_filter( [
-			$cur_cat ? ( ( $t = get_term_by( 'slug', $cur_cat, LM_Model::CATEGORY ) ) ? wp_specialchars_decode( $t->name ) : '' ) : '',
-			( $c = LM_Combo::current() ) ? wp_specialchars_decode( $c['make']->name ) : ( $cur_make ? ( ( $t = get_term_by( 'slug', $cur_make, LM_Model::MAKE ) ) ? wp_specialchars_decode( $t->name ) : '' ) : '' ),
-		] );
-		$toggle = '<button type="button" class="lmf-ftoggle" aria-expanded="false" aria-controls="lmf-fpanel"><span>Filters</span>' .
-			( $active ? '<em>' . esc_html( implode( ' · ', $active ) ) . '</em>' : '<em>Category, make</em>' ) . '</button>';
-		$html = '<div class="lmf-fhead"><strong>Filters</strong><button type="button" class="lmf-fclose" aria-label="Close filters">×</button></div>';
-		$html .= '<h4>Category</h4><ul class="lmf-list">';
-		foreach ( get_terms( [ 'taxonomy' => LM_Model::CATEGORY, 'parent' => 0, 'hide_empty' => true, 'orderby' => 'name' ] ) as $c ) {
-			$html .= '<li><a' . ( $cur_cat === $c->slug ? ' class="on"' : '' ) . ' href="' . esc_url( get_term_link( $c ) ) . '">' . esc_html( wp_specialchars_decode( $c->name ) ) . '</a><ul>';
-			foreach ( get_terms( [ 'taxonomy' => LM_Model::CATEGORY, 'parent' => $c->term_id, 'hide_empty' => true, 'orderby' => 'name' ] ) as $k ) {
-				$html .= '<li><a' . ( $cur_cat === $k->slug ? ' class="on"' : '' ) . ' href="' . esc_url( get_term_link( $k ) ) . '">' . esc_html( wp_specialchars_decode( $k->name ) ) . ' <span>' . (int) $k->count . '</span></a></li>';
-			}
-			$html .= '</ul></li>';
+	/** Current archive URL without page number or query string: the filter form submits here. */
+	private static function base_url(): string {
+		if ( $c = LM_Combo::current() ) return LM_Combo::url( $c['cat'], $c['make'] );
+		if ( is_tax() && ( $t = get_queried_object() ) instanceof WP_Term ) {
+			$l = get_term_link( $t );
+			if ( ! is_wp_error( $l ) ) return $l;
 		}
-		$html .= '</ul><h4>Make</h4><ul class="lmf-list">';
-		// On a category: only the makes in it, with their count there, linking to the make × category page.
-		$in_cat = is_tax( LM_Model::CATEGORY ) && get_queried_object() instanceof WP_Term ? get_queried_object() : null;
-		if ( $in_cat ) {
-			$mk = LM_Combo::current();
-			$counts = LM_Combo::makes_in( $in_cat );
-			$terms = $counts ? get_terms( [ 'taxonomy' => LM_Model::MAKE, 'include' => array_keys( $counts ), 'hide_empty' => false, 'orderby' => 'name' ] ) : [];
-			foreach ( $terms as $m ) {
-				$on = $mk && $mk['make']->term_id === $m->term_id;
-				$html .= '<li><a' . ( $on ? ' class="on"' : '' ) . ' href="' . esc_url( $on ? get_term_link( $in_cat ) : LM_Combo::url( $in_cat, $m ) ) . '">' . esc_html( wp_specialchars_decode( $m->name ) ) . ' <span>' . (int) $counts[ $m->term_id ] . '</span></a></li>';
-			}
-			return self::filters_wrap( $kw, $toggle, $html );
-		}
-		foreach ( get_terms( [ 'taxonomy' => LM_Model::MAKE, 'hide_empty' => true, 'orderby' => 'name' ] ) as $m ) {
-			$html .= '<li><a' . ( $cur_make === $m->slug ? ' class="on"' : '' ) . ' href="' . esc_url( get_term_link( $m ) ) . '">' . esc_html( wp_specialchars_decode( $m->name ) ) . ' <span>' . (int) $m->count . '</span></a></li>';
-		}
-		return self::filters_wrap( $kw, $toggle, $html );
+		return get_post_type_archive_link( LM_Model::PT );
 	}
 
-	private static function filters_wrap( string $kw, string $toggle, string $lists ): string {
-		return '<aside class="lmf-filters">' . $kw . $toggle . '<div class="lmf-fpanel" id="lmf-fpanel">' . $lists . '</ul></div><div class="lmf-fshade" hidden></div></aside>' .
-			'<script>(function(){var a=document.currentScript.previousElementSibling,t=a.querySelector(".lmf-ftoggle"),s=a.querySelector(".lmf-fshade");' .
+	/** Query args to carry over when switching category or make (keyword, ranges, sort), so a price filter survives. */
+	private static function keep_args(): array {
+		$keep = array_filter( self::params(), fn( $v ) => $v !== '' );
+		if ( ! empty( $_GET['q'] ) ) $keep['q'] = sanitize_text_field( wp_unslash( $_GET['q'] ) ); // phpcs:ignore WordPress.Security.NonceVerification
+		return $keep;
+	}
+
+	private static function link( string $url, array $args = [] ): string {
+		return esc_url( $args ? add_query_arg( array_map( 'rawurlencode', $args ), $url ) : $url );
+	}
+
+	/** Distinct values of a listing field among published listings (to show state / condition only when there is a choice). */
+	private static function distinct( string $key ): array {
+		$ck = 'lm_distinct_' . $key . '_' . (int) get_option( LM_Seo::CACHE_KEY, 1 );
+		$v = get_transient( $ck );
+		if ( is_array( $v ) ) return $v;
+		global $wpdb;
+		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT pm.meta_value v, COUNT(*) n FROM {$wpdb->postmeta} pm JOIN {$wpdb->posts} p ON p.ID = pm.post_id
+			WHERE pm.meta_key = %s AND pm.meta_value <> '' AND p.post_type = %s AND p.post_status = 'publish' GROUP BY pm.meta_value ORDER BY n DESC", $key, LM_Model::PT ) );
+		$v = [];
+		foreach ( $rows as $r ) $v[ $r->v ] = (int) $r->n;
+		set_transient( $ck, $v, DAY_IN_SECONDS );
+		return $v;
+	}
+
+	/** Labels of the active filters, each with the URL that removes it. */
+	public static function active_filters(): array {
+		$base = self::base_url();
+		$args = self::keep_args();
+		$out  = [];
+		$money = fn( $v ) => '$' . ( $v >= 1000 && $v % 1000 === 0 ? number_format( $v / 1000 ) . 'k' : number_format( $v ) );
+		$p = self::params();
+		$without = function ( array $keys ) use ( $base, $args ) { return self::link( $base, array_diff_key( $args, array_flip( $keys ) ) ); };
+		if ( $c = LM_Combo::current() ) {
+			$out[] = [ wp_specialchars_decode( $c['make']->name ), self::link( get_term_link( $c['cat'] ), $args ) ];
+			$out[] = [ wp_specialchars_decode( $c['cat']->name ), self::link( get_term_link( $c['make'] ), $args ) ];
+		} elseif ( is_tax( [ LM_Model::CATEGORY, LM_Model::MAKE ] ) && ( $t = get_queried_object() ) instanceof WP_Term ) {
+			$up = $t->taxonomy === LM_Model::CATEGORY && $t->parent ? get_term_link( get_term( $t->parent ) ) : get_post_type_archive_link( LM_Model::PT );
+			$out[] = [ wp_specialchars_decode( $t->name ), self::link( $up, $args ) ];
+		}
+		if ( ! empty( $args['q'] ) ) $out[] = [ '“' . $args['q'] . '”', $without( [ 'q' ] ) ];
+		if ( $p['min_price'] !== '' || $p['max_price'] !== '' ) {
+			$l = $p['min_price'] !== '' && $p['max_price'] !== '' ? $money( $p['min_price'] ) . '–' . $money( $p['max_price'] ) : ( $p['min_price'] !== '' ? $money( $p['min_price'] ) . '+' : 'Under ' . $money( $p['max_price'] ) );
+			$out[] = [ $l, $without( [ 'min_price', 'max_price' ] ) ];
+		}
+		if ( $p['year_min'] !== '' || $p['year_max'] !== '' ) {
+			$l = $p['year_min'] !== '' && $p['year_max'] !== '' ? $p['year_min'] . '–' . $p['year_max'] : ( $p['year_min'] !== '' ? $p['year_min'] . ' or newer' : $p['year_max'] . ' or older' );
+			$out[] = [ $l, $without( [ 'year_min', 'year_max' ] ) ];
+		}
+		if ( $p['hours_max'] !== '' ) $out[] = [ 'Under ' . number_format( $p['hours_max'] ) . ' hrs', $without( [ 'hours_max' ] ) ];
+		if ( $p['state'] ) $out[] = [ $p['state'], $without( [ 'state' ] ) ];
+		if ( $p['condition'] ) $out[] = [ ucfirst( $p['condition'] ), $without( [ 'condition' ] ) ];
+		return $out;
+	}
+
+	private static function section( string $title, string $body, bool $open, string $summary = '' ): string {
+		return '<details class="lmf-fsec"' . ( $open ? ' open' : '' ) . '><summary><span>' . esc_html( $title ) . '</span>' .
+			( $summary !== '' ? '<em>' . esc_html( $summary ) . '</em>' : '' ) . '</summary><div class="lmf-fbody">' . $body . '</div></details>';
+	}
+
+	public static function filters() {
+		$cur_cat  = is_tax( LM_Model::CATEGORY ) ? get_queried_object()->slug : ( isset( $_GET['eqcat'] ) ? sanitize_title( wp_unslash( $_GET['eqcat'] ) ) : '' );
+		$cur_make = is_tax( LM_Model::MAKE ) ? get_queried_object()->slug : ( isset( $_GET['make'] ) ? sanitize_title( wp_unslash( $_GET['make'] ) ) : '' );
+		$combo = LM_Combo::current();
+		if ( $combo ) $cur_make = $combo['make']->slug;
+		$p    = self::params();
+		$args = self::keep_args();
+		$kw   = isset( $_GET['q'] ) ? sanitize_text_field( wp_unslash( $_GET['q'] ) ) : '';
+		$active = self::active_filters();
+
+		// Mobile: a "Filters" button opens the panel, so the machines come first.
+		$toggle = '<button type="button" class="lmf-ftoggle" aria-expanded="false" aria-controls="lmf-fpanel"><span>Filters' . ( $active ? ' (' . count( $active ) . ')' : '' ) . '</span>' .
+			'<em>' . esc_html( $active ? implode( ' · ', wp_list_pluck( $active, 0 ) ) : 'Category, make, price, year' ) . '</em></button>';
+
+		$h = '<div class="lmf-fhead"><strong>Filters</strong><button type="button" class="lmf-fclose" aria-label="Close filters">×</button></div>';
+		$h .= '<div class="lmf-kw"><input type="search" name="q" value="' . esc_attr( $kw ) . '" placeholder="Make, model or keyword" aria-label="Keyword"><button type="submit">Go</button></div>';
+
+		// Category: groups collapsed, except the one holding the current category.
+		$cats = '';
+		$cur_name = '';
+		foreach ( get_terms( [ 'taxonomy' => LM_Model::CATEGORY, 'parent' => 0, 'hide_empty' => false, 'orderby' => 'name' ] ) as $c ) {
+			$kids = get_terms( [ 'taxonomy' => LM_Model::CATEGORY, 'parent' => $c->term_id, 'hide_empty' => true, 'orderby' => 'name' ] );
+			$total = (int) $c->count + array_sum( wp_list_pluck( $kids, 'count' ) );
+			if ( ! $total ) continue;
+			$in = $cur_cat === $c->slug || in_array( $cur_cat, wp_list_pluck( $kids, 'slug' ), true );
+			$sub = '<li><a class="lmf-all' . ( $cur_cat === $c->slug ? ' on' : '' ) . '" href="' . self::link( get_term_link( $c ), $args ) . '">All ' . esc_html( wp_specialchars_decode( $c->name ) ) . ' <span>' . $total . '</span></a></li>';
+			foreach ( $kids as $k ) {
+				if ( $cur_cat === $k->slug ) $cur_name = wp_specialchars_decode( $k->name );
+				$sub .= '<li><a' . ( $cur_cat === $k->slug ? ' class="on"' : '' ) . ' href="' . self::link( get_term_link( $k ), $args ) . '">' . esc_html( wp_specialchars_decode( $k->name ) ) . ' <span>' . (int) $k->count . '</span></a></li>';
+			}
+			if ( $cur_cat === $c->slug ) $cur_name = wp_specialchars_decode( $c->name );
+			$cats .= '<li><details' . ( $in ? ' open' : '' ) . '><summary>' . esc_html( wp_specialchars_decode( $c->name ) ) . ' <span>' . $total . '</span></summary><ul>' . $sub . '</ul></details></li>';
+		}
+		$all_eq = '<li><a class="lmf-all' . ( $cur_cat === '' ? ' on' : '' ) . '" href="' . self::link( get_post_type_archive_link( LM_Model::PT ), $args ) . '">All equipment</a></li>';
+		$h .= self::section( 'Category', '<ul class="lmf-list lmf-tree">' . $all_eq . $cats . '</ul>', true, $cur_name );
+
+		// Price: presets + custom range.
+		$money = fn( $v ) => $v === '' ? '' : (string) $v;
+		$presets = [ [ '', 25000, 'Under $25k' ], [ 25000, 50000, '$25k–$50k' ], [ 50000, 100000, '$50k–$100k' ], [ 100000, 250000, '$100k–$250k' ], [ 250000, '', '$250k+' ] ];
+		$chips = '';
+		$price_label = '';
+		foreach ( $presets as [ $lo, $hi, $label ] ) {
+			$on = $p['min_price'] === $lo && $p['max_price'] === $hi;
+			if ( $on ) $price_label = $label;
+			$a = array_merge( array_diff_key( $args, [ 'min_price' => 1, 'max_price' => 1 ] ), array_filter( [ 'min_price' => $lo, 'max_price' => $hi ], fn( $v ) => $v !== '' ) );
+			$chips .= '<a class="lmf-pchip' . ( $on ? ' on' : '' ) . '" href="' . self::link( self::base_url(), $on ? array_diff_key( $args, [ 'min_price' => 1, 'max_price' => 1 ] ) : $a ) . '">' . esc_html( $label ) . '</a>';
+		}
+		if ( ! $price_label && ( $p['min_price'] !== '' || $p['max_price'] !== '' ) ) $price_label = 'Custom';
+		$h .= self::section( 'Price', '<div class="lmf-pchips">' . $chips . '</div>' .
+			'<div class="lmf-range"><label><span>Min $</span><input type="number" name="min_price" inputmode="numeric" min="0" step="1000" placeholder="No min" value="' . esc_attr( $money( $p['min_price'] ) ) . '"></label>' .
+			'<label><span>Max $</span><input type="number" name="max_price" inputmode="numeric" min="0" step="1000" placeholder="No max" value="' . esc_attr( $money( $p['max_price'] ) ) . '"></label></div>', true, $price_label );
+
+		// Year and hours.
+		$years = range( (int) gmdate( 'Y' ) + 1, 2000 );
+		$sel = function ( string $name, array $opts, $cur, string $any ) {
+			$o = '<option value="">' . esc_html( $any ) . '</option>';
+			foreach ( $opts as $v => $l ) $o .= '<option value="' . esc_attr( (string) $v ) . '"' . selected( (string) $cur, (string) $v, false ) . '>' . esc_html( $l ) . '</option>';
+			return '<select name="' . esc_attr( $name ) . '">' . $o . '</select>';
+		};
+		$yopts = array_combine( $years, $years );
+		$year_on = $p['year_min'] !== '' || $p['year_max'] !== '';
+		$h .= self::section( 'Year', '<div class="lmf-range"><label><span>From</span>' . $sel( 'year_min', $yopts, $p['year_min'], 'Any' ) . '</label><label><span>To</span>' . $sel( 'year_max', $yopts, $p['year_max'], 'Any' ) . '</label></div>',
+			$year_on, $year_on ? trim( $p['year_min'] . '–' . $p['year_max'], '–' ) : '' );
+		$hopts = [ 500 => 'Under 500 hrs', 1000 => 'Under 1,000 hrs', 2500 => 'Under 2,500 hrs', 5000 => 'Under 5,000 hrs', 10000 => 'Under 10,000 hrs' ];
+		$h .= self::section( 'Hours', $sel( 'hours_max', $hopts, $p['hours_max'], 'Any hours' ), $p['hours_max'] !== '', $p['hours_max'] !== '' ? ( $hopts[ $p['hours_max'] ] ?? 'Under ' . number_format( $p['hours_max'] ) ) : '' );
+
+		// Make: the 8 with most listings, then "Show all" with a search box. On a category, only the makes in it,
+		// linking to the make × category page.
+		$in_cat = is_tax( LM_Model::CATEGORY ) && get_queried_object() instanceof WP_Term ? get_queried_object() : null;
+		$list = [];
+		if ( $in_cat ) {
+			$counts = LM_Combo::makes_in( $in_cat );
+			$terms = $counts ? get_terms( [ 'taxonomy' => LM_Model::MAKE, 'include' => array_keys( $counts ), 'hide_empty' => false ] ) : [];
+			foreach ( $terms as $m ) {
+				$on = $combo && $combo['make']->term_id === $m->term_id;
+				$list[] = [ $m, (int) $counts[ $m->term_id ], $on, $on ? get_term_link( $in_cat ) : LM_Combo::url( $in_cat, $m ) ];
+			}
+		} else {
+			foreach ( get_terms( [ 'taxonomy' => LM_Model::MAKE, 'hide_empty' => true ] ) as $m ) {
+				$on = $cur_make === $m->slug;
+				$list[] = [ $m, (int) $m->count, $on, $on ? get_post_type_archive_link( LM_Model::PT ) : get_term_link( $m ) ];
+			}
+		}
+		usort( $list, fn( $a, $b ) => $b[1] <=> $a[1] ?: strcasecmp( $a[0]->name, $b[0]->name ) );
+		$top = 8;
+		$mk = '';
+		$make_label = '';
+		foreach ( $list as $i => [ $m, $n, $on, $url ] ) {
+			if ( $on ) $make_label = wp_specialchars_decode( $m->name );
+			$mk .= '<li' . ( $i >= $top && ! $on ? ' class="lmf-more"' : '' ) . ' data-name="' . esc_attr( strtolower( $m->name ) ) . '"><a' . ( $on ? ' class="on"' : '' ) . ' href="' . self::link( $url, $args ) . '">' .
+				esc_html( wp_specialchars_decode( $m->name ) ) . ' <span>' . $n . '</span></a></li>';
+		}
+		if ( $mk ) {
+			$extra = count( $list ) > $top;
+			$h .= self::section( 'Make', ( $extra ? '<input type="search" class="lmf-msearch" placeholder="Search ' . count( $list ) . ' makes" aria-label="Search makes">' : '' ) .
+				'<ul class="lmf-list lmf-makes">' . $mk . '</ul>' . ( $extra ? '<button type="button" class="lmf-showall">Show all ' . count( $list ) . ' makes</button>' : '' ), true, $make_label );
+		}
+
+		// State and condition only when listings differ (today all are used and in PA).
+		foreach ( [ 'state' => [ 'lm_state', 'State' ], 'condition' => [ 'lm_condition', 'Condition' ] ] as $name => [ $key, $title ] ) {
+			$vals = self::distinct( $key );
+			if ( count( $vals ) < 2 && $p[ $name ] === '' ) continue;
+			$opts = [];
+			foreach ( $vals as $v => $n ) $opts[ $v ] = ( $name === 'condition' ? ucfirst( $v ) : $v ) . ' (' . $n . ')';
+			$h .= self::section( $title, $sel( $name, $opts, $p[ $name ], 'Any' ), $p[ $name ] !== '', $p[ $name ] !== '' ? ( $name === 'condition' ? ucfirst( $p[ $name ] ) : $p[ $name ] ) : '' );
+		}
+
+		if ( $p['sort'] ) $h .= '<input type="hidden" name="sort" value="' . esc_attr( $p['sort'] ) . '">';
+		if ( isset( $_GET['dealer'] ) ) $h .= '<input type="hidden" name="dealer" value="' . absint( $_GET['dealer'] ) . '">';
+		$h .= '<div class="lmf-fapply"><button type="submit" class="lmf-btn">Show results</button>' .
+			( $active ? '<a href="' . esc_url( get_post_type_archive_link( LM_Model::PT ) ) . '">Clear all</a>' : '' ) . '</div>';
+		return self::filters_wrap( $toggle, $h );
+	}
+
+	private static function filters_wrap( string $toggle, string $panel ): string {
+		return '<aside class="lmf-filters">' . $toggle . '<form class="lmf-fpanel" id="lmf-fpanel" action="' . esc_url( self::base_url() ) . '" method="get">' . $panel . '</form><div class="lmf-fshade" hidden></div></aside>' .
+			'<script>(function(){var a=document.currentScript.previousElementSibling,t=a.querySelector(".lmf-ftoggle"),s=a.querySelector(".lmf-fshade"),f=a.querySelector("form");' .
 			'function set(o){a.classList.toggle("is-open",o);t.setAttribute("aria-expanded",o?"true":"false");s.hidden=!o;document.documentElement.classList.toggle("lmf-noscroll",o);}' .
 			't.addEventListener("click",function(){set(true);});a.querySelector(".lmf-fclose").addEventListener("click",function(){set(false);});s.addEventListener("click",function(){set(false);});' .
-			'document.addEventListener("keydown",function(e){if(e.key==="Escape")set(false);});})();</script>';
+			'document.addEventListener("keydown",function(e){if(e.key==="Escape")set(false);});' .
+			// Empty fields stay out of the URL; selects apply on change (desktop), the button applies on phones.
+			'f.addEventListener("submit",function(){f.querySelectorAll("input,select").forEach(function(i){if(!i.value)i.disabled=true;});});' .
+			'f.querySelectorAll("select").forEach(function(x){x.addEventListener("change",function(){if(!a.classList.contains("is-open"))f.requestSubmit();});});' .
+			'var mk=a.querySelector(".lmf-makes"),b=a.querySelector(".lmf-showall"),q=a.querySelector(".lmf-msearch");' .
+			'if(b)b.addEventListener("click",function(){var o=mk.classList.toggle("show-all");b.textContent=o?"Show fewer makes":b.dataset.l;});if(b)b.dataset.l=b.textContent;' .
+			'if(q){q.addEventListener("keydown",function(e){if(e.key==="Enter")e.preventDefault();});q.addEventListener("input",function(){var v=q.value.trim().toLowerCase();mk.classList.toggle("is-search",!!v);' .
+			'mk.querySelectorAll("li").forEach(function(li){li.hidden=!!v&&li.dataset.name.indexOf(v)<0;});if(b)b.hidden=!!v;});q.removeAttribute("name");}' .
+			'})();</script>';
 	}
+
 
 	public static function archive_title() {
 		$title = 'Heavy equipment for sale';
