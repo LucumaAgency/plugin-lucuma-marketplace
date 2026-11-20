@@ -460,6 +460,8 @@ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded'
 		$title = 'Heavy equipment for sale';
 		if ( is_tax() ) $title = wp_specialchars_decode( single_term_title( '', false ) ) . ( is_tax( LM_Model::MAKE ) ? ' equipment' : '' ) . ' for sale';
 		if ( $c = LM_Combo::current() ) $title = LM_Combo::name( $c['cat'], $c['make'] ) . ' for sale';
+		// 0.31.0: a category can set its own H1 (term meta lm_h1), only on the clean category view.
+		if ( ! $c && is_tax( LM_Model::CATEGORY ) && ( $o = get_queried_object() ) instanceof WP_Term && ( $h = get_term_meta( $o->term_id, 'lm_h1', true ) ) ) $title = $h;
 		if ( is_author() ) {
 			global $wp_query;
 			return '<h2 class="lmf-h2">Equipment for sale (' . (int) $wp_query->found_posts . ')</h2>';

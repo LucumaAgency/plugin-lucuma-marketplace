@@ -18,7 +18,7 @@ defined( 'ABSPATH' ) || exit;
 
 class LM_Landing {
 
-	const FIELDS = [ 'lm_intro', 'lm_body', 'lm_seo_title', 'lm_seo_desc' ];
+	const FIELDS = [ 'lm_intro', 'lm_body', 'lm_seo_title', 'lm_seo_desc', 'lm_h1' ];
 
 	private static array $stats = [];
 

@@ -215,3 +215,5 @@ Feeds (0.30.0, 19-nov-2026). El sitio no tiene comentarios: los feeds por artíc
 (`LM_Seo::feeds`), y se quitan del `<head>` (`feed_links_extra` y feed de comentarios). Solo queda `/feed/`
 (posts), con `X-Robots-Tag: noindex, follow`. Motivo: GSC marcaba 14 feeds como "Crawled - currently not indexed".
 
+
+H1 propio por categoría (0.31.0, 20-nov-2026): meta de término `lm_h1` (en REST y en el editor del término) reemplaza el H1 automático "<Categoría> for sale" en la vista de categoría. Se carga con `seo/categorias/cargar.py` (campo `h1` del JSON). Primer uso: /for-sale/construction/.
