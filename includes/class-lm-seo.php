@@ -49,6 +49,25 @@ class LM_Seo {
 		add_filter( 'seopress_sitemaps_term_single_url', [ __CLASS__, 'sitemap_term' ], 20, 2 );
 		add_action( 'wp_head', [ __CLASS__, 'json_ld' ], 30 );
 		add_action( 'save_post_' . LM_Model::PT, [ __CLASS__, 'on_save' ], 99, 2 );
+		// Feeds (0.30.0): the site has no comments, so per-post comment feeds and term/archive feeds are
+		// crawl waste (GSC "Crawled - currently not indexed"). Keep only the main blog feed /feed/.
+		remove_action( 'wp_head', 'feed_links_extra', 3 );
+		add_filter( 'feed_links_show_comments_feed', '__return_false' );
+		add_action( 'template_redirect', [ __CLASS__, 'feeds' ], 1 );
+	}
+
+	/** 301 every feed except the main posts feed to its HTML page; noindex the main feed. */
+	public static function feeds() {
+		if ( ! is_feed() ) return;
+		$main = ! is_comment_feed() && ! is_singular() && ! is_archive() && ! is_search();
+		if ( $main ) { header( 'X-Robots-Tag: noindex, follow', true ); return; }
+		$o = get_queried_object(); $to = '';
+		if ( is_singular() && $o instanceof WP_Post ) $to = get_permalink( $o );
+		elseif ( $o instanceof WP_Term ) { $l = get_term_link( $o ); $to = is_wp_error( $l ) ? '' : $l; }
+		elseif ( is_author() && $o instanceof WP_User ) $to = get_author_posts_url( $o->ID );
+		elseif ( is_post_type_archive() ) $to = get_post_type_archive_link( get_query_var( 'post_type' ) ?: 'post' );
+		wp_safe_redirect( $to ?: home_url( '/' ), 301, 'Heavy Listing' );
+		exit;
 	}
 
 	/* ------------------------------------------------------------------ data helpers */

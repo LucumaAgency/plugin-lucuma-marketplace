@@ -209,3 +209,9 @@ JSON-LD en archivos de categoría: BreadcrumbList siempre; ItemList y FAQPage en
 - Rutas firmadas para Yard: `GET sync/inquiries`, `POST sync/inquiries/ack`, `GET sync/stats?since=`.
 - Evento GTM `inquiry_submit` (dataLayer) al enviar; `inquiry_open` al abrir el formulario.
 - Borrado diario (wp-cron `lm_inquiries_purge`) de las consultas que Yard ya tiene hace más de 30 días.
+
+Feeds (0.30.0, 19-nov-2026). El sitio no tiene comentarios: los feeds por artículo (`/<post>/feed/`), por término
+(`/make/<x>/feed/`, `/category/<x>/feed/`), de autor y de archivos de CPT redirigen con 301 a su página HTML
+(`LM_Seo::feeds`), y se quitan del `<head>` (`feed_links_extra` y feed de comentarios). Solo queda `/feed/`
+(posts), con `X-Robots-Tag: noindex, follow`. Motivo: GSC marcaba 14 feeds como "Crawled - currently not indexed".
+
