@@ -54,7 +54,7 @@ class LM_Auctions {
 		} );
 		add_action( 'save_post_' . self::PT, [ __CLASS__, 'save_box' ], 10, 2 );
 		add_action( 'admin_notices', [ __CLASS__, 'featured_full_notice' ] );
-		foreach ( [ 'auctions', 'auctions_featured', 'auction_facts', 'auctions_title', 'auction_months' ] as $s ) add_shortcode( 'lm_' . $s, [ __CLASS__, $s ] );
+		foreach ( [ 'auctions', 'auctions_featured', 'auction_facts', 'auctions_title', 'auction_months', 'auctions_guide' ] as $s ) add_shortcode( 'lm_' . $s, [ __CLASS__, $s ] );
 		add_filter( 'query_vars', fn( $v ) => array_merge( $v, [ 'lm_month' ] ) );
 		add_action( 'init', function () {
 			add_rewrite_rule( '^auctions/(\\d{4}-\\d{2})/?$', 'index.php?post_type=' . self::PT . '&lm_month=$matches[1]', 'top' );
@@ -296,10 +296,42 @@ class LM_Auctions {
 			$p = 'Construction, farm and truck auctions scheduled for ' . self::month_label( $month ) . ', with dates, locations, auction type and a link to each catalog.';
 		} else {
 			$h = 'Heavy equipment auctions' . ( $where ? ' in ' . $where : '' );
-			$p = 'Upcoming construction, farm and truck auctions from dealers and auctioneers: dates, locations, auction type and catalogs. Bidding happens on each auctioneer\'s own site.';
+			$p = 'Upcoming equipment auctions in Pennsylvania and nearby: construction, farm and truck sales from auctioneers and dealers, with dates, locations, online bidding and catalogs. Bidding happens on each auctioneer\'s own site.';
 		}
 		return '<h1 class="lmf-h1">' . esc_html( $h ) . '</h1><p class="lmf-lead">' . esc_html( $p ) .
 			( $month ? '' : ' <a href="' . esc_url( home_url( '/' . LM_Auctioneers::BASE . '/' ) ) . '">Browse auctions by auctioneer</a>.' ) . '</p>';
+	}
+
+	/**
+	 * [lm_auctions_guide] (0.32.0): guide text + FAQ (with FAQPage JSON-LD) under the calendar, only on the main
+	 * /auctions/ page (not on month pages, which would repeat it). Targets "equipment auctions pa / near me".
+	 */
+	public static function auctions_guide() {
+		if ( self::month() || ! is_post_type_archive( self::PT ) || get_query_var( 'paged' ) > 1 ) return '';
+		$faq = [
+			[ 'Where are the equipment auctions in Pennsylvania?', 'Most construction and farm equipment auctions in Pennsylvania happen in the south central counties (York, Lancaster, Adams and Franklin) and in central PA, with consignment sales across the state. The calendar above lists every upcoming sale we track, with the location and a link to the catalog.' ],
+			[ 'How do I find equipment auctions near me?', 'Use the month chips above to see what is coming up, then check the location of each sale. Many auctions also take online bids, so you can bid without driving there. Our <a href="/equipment-auctions-pennsylvania/">guide to equipment auctions in Pennsylvania</a> explains the main auctioneers by region.' ],
+			[ 'Do equipment auctions charge a buyer\'s premium?', 'Almost all of them do. It is a percentage added to the hammer price, often with a cap per item, and online bidding usually adds a few points more. See <a href="/buyers-premium-equipment-auctions/">buyer\'s premium explained</a> before you bid.' ],
+			[ 'Do I pay sales tax at an auction in PA?', 'Yes. Pennsylvania sales tax (6%, 7% in Allegheny County and 8% in Philadelphia) applies to the full price, buyer\'s premium included, unless you have an exemption such as the farm exemption with a REV-1220 certificate. Details in <a href="/pa-sales-tax-heavy-equipment/">PA sales tax on used equipment</a>.' ],
+			[ 'Are there farm equipment auctions in Pennsylvania?', 'Yes, many: farm dispersals, consignment sales and the spring mud sales in Lancaster County. See <a href="/farm-equipment-auctions-pa/">farm equipment auctions in PA</a>.' ],
+			[ 'How do I list my auction on Heavy Listing?', 'Auctioneers can add their sales to this calendar for free. Use the <a href="/list-your-auction/">list your auction</a> form.' ],
+		];
+		$out  = '<div class="lmf-prose lmf-cat-body lmf-guide"><h2>Equipment auctions in PA: how this calendar works</h2>';
+		$out .= '<p>This calendar collects the upcoming heavy equipment auctions in Pennsylvania from auctioneers and dealers: construction equipment, farm machinery, trucks, trailers and municipal surplus. Each listing shows the date, the location, whether you can bid online and a link to the auctioneer\'s own catalog. Bidding and payment always happen with the auctioneer, not on Heavy Listing.</p>';
+		$out .= '<h2>Before you bid at a heavy equipment auction</h2><ul>';
+		$out .= '<li><strong>Read the terms.</strong> Buyer\'s premium, deposit for online bidders, payment deadline and pickup window change from one auctioneer to the next.</li>';
+		$out .= '<li><strong>Inspect or ask.</strong> Machines sell as is. Go to the preview day, or call and ask for hours, service records and a video of the machine running.</li>';
+		$out .= '<li><strong>Price it first.</strong> Compare with dealer asking prices for the same machine on <a href="/for-sale/construction/">used construction equipment for sale in PA</a>, adding premium and tax to your top bid.</li>';
+		$out .= '<li><strong>Plan the haul.</strong> Most sales give you one to two weeks to pick up. See <a href="/transport-heavy-equipment-pennsylvania/">transporting heavy equipment in PA</a>.</li></ul>';
+		$out .= '<p>First time? Our step by step guide on <a href="/how-to-buy-at-equipment-auction/">how to buy at an equipment auction</a> covers registration, bidding and payment. Looking for repossessed machines? See <a href="/repo-equipment-auctions-pa/">repo equipment auctions in PA</a>.</p>';
+		$out .= '<h2>Frequently asked questions</h2><div class="lmf-faq">';
+		$ld = [];
+		foreach ( $faq as [ $q, $a ] ) {
+			$out .= '<h3>' . esc_html( $q ) . '</h3><p>' . wp_kses_post( $a ) . '</p>';
+			$ld[] = [ '@type' => 'Question', 'name' => $q, 'acceptedAnswer' => [ '@type' => 'Answer', 'text' => wp_strip_all_tags( $a ) ] ];
+		}
+		$out .= '</div></div><script type="application/ld+json">' . wp_json_encode( [ '@context' => 'https://schema.org', '@type' => 'FAQPage', 'mainEntity' => $ld ] ) . '</script>';
+		return $out;
 	}
 
 	/** Chips: All upcoming · this month · the next 3 months that have auctions. */

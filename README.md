@@ -217,3 +217,5 @@ Feeds (0.30.0, 19-nov-2026). El sitio no tiene comentarios: los feeds por artíc
 
 
 H1 propio por categoría (0.31.0, 20-nov-2026): meta de término `lm_h1` (en REST y en el editor del término) reemplaza el H1 automático "<Categoría> for sale" en la vista de categoría. Se carga con `seo/categorias/cargar.py` (campo `h1` del JSON). Primer uso: /for-sale/construction/.
+
+Guía del calendario (0.32.0, 20-nov-2026): `[lm_auctions_guide]` agrega texto, FAQ y FAQPage JSON-LD bajo el calendario, solo en /auctions/ (no en meses ni página 2+). Lead del calendario con "equipment auctions in Pennsylvania". Se coloca en la plantilla de archivo de remates (bricks/gen.py → subastas).
